@@ -1,0 +1,87 @@
+name: CI/CD
+
+# CI  - every pull request and every push to main: lint, typecheck, build, smoke-test.
+# CD  - pushes to main that pass CI are deployed to GitHub Pages.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  ci:
+    name: Lint, typecheck & build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build static site
+        run: npm run build
+        env:
+          # Same base path as the live site, so PRs test the real deploy build.
+          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+
+      - name: Smoke-test export
+        run: |
+          set -euo pipefail
+          for page in index.html about/index.html episodes/index.html; do
+            test -f "out/$page" || { echo "missing out/$page"; exit 1; }
+          done
+          # Every published episode needs an episode page and a present page.
+          slugs=$(node -e '
+            const src = require("fs").readFileSync("src/content/episodes.ts", "utf8");
+            // match slug + status inside the same { ... } object only
+            const re = /slug:\s*"([^"]+)"[^{}]*?status:\s*"(\w+)"/g;
+            let m; while ((m = re.exec(src))) if (m[2] === "published") console.log(m[1]);
+          ')
+          test -n "$slugs" || { echo "no published episodes found"; exit 1; }
+          for slug in $slugs; do
+            test -f "out/episodes/$slug/index.html" || { echo "missing episode page: $slug"; exit 1; }
+            test -f "out/episodes/$slug/present/index.html" || { echo "missing present page: $slug"; exit 1; }
+            echo "ok: $slug"
+          done
+          grep -q "/${{ github.event.repository.name }}/_next/" out/index.html || { echo "base path missing from assets"; exit 1; }
+          touch out/.nojekyll
+
+      - name: Upload Pages artifact
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: out
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: ci
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
