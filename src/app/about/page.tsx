@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PageShell } from "@/components/SiteChrome";
 import { LogoMark } from "@/components/Logo";
+import { HostAvatar } from "@/components/HostAvatar";
 import { site } from "@/site.config";
 
 export const metadata: Metadata = { title: "About" };
@@ -32,15 +33,7 @@ export default function AboutPage() {
           {site.hosts.map((h) => (
             <div key={h.id} className={`rounded-2xl border bg-surface p-6 ${h.color === "blue" ? "border-blue/40" : "border-purple/40"}`}>
               <div className="flex items-center gap-4">
-                <div
-                  className="flex h-14 w-14 items-center justify-center rounded-full"
-                  style={{ background: `var(--${h.color})` }}
-                >
-                  <span className="flex gap-1.5">
-                    <span className={`h-2 w-2 ${h.color === "blue" ? "bg-white" : "bg-bg"}`} />
-                    <span className={`h-2 w-2 ${h.color === "blue" ? "bg-white" : "bg-bg"}`} />
-                  </span>
-                </div>
+                <HostAvatar host={h} size={72} />
                 <div>
                   <div className="font-display text-xl font-bold" style={{ color: `var(--${h.color})` }}>
                     {h.name}
@@ -49,12 +42,24 @@ export default function AboutPage() {
                 </div>
               </div>
               <p className="mt-4 text-sm leading-relaxed text-muted">{h.bio}</p>
-              <div className="mt-4 flex gap-3 text-sm">
+              <div className="mt-5 flex flex-wrap gap-2 text-sm">
                 {h.links.map((l) => (
-                  <a key={l.label} href={l.href} className="text-muted underline-offset-4 hover:text-text hover:underline">
-                    {l.label}
+                  <a
+                    key={l.label}
+                    href={l.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-full border border-border-strong px-4 py-1.5 text-muted transition hover:bg-surface-2 hover:text-text"
+                  >
+                    {l.label} ↗
                   </a>
                 ))}
+                <a
+                  href={`mailto:${h.email}`}
+                  className="rounded-full border border-border-strong px-4 py-1.5 text-muted transition hover:bg-surface-2 hover:text-text"
+                >
+                  Email
+                </a>
               </div>
             </div>
           ))}
@@ -71,10 +76,16 @@ export default function AboutPage() {
           ))}
         </div>
         <p className="mt-8 text-sm text-muted">
-          Questions, corrections, episode ideas:{" "}
-          <a href={`mailto:${site.contactEmail}`} className="text-blue hover:underline">
-            {site.contactEmail}
-          </a>
+          Questions, corrections, episode ideas: write to{" "}
+          {site.hosts.map((h, i) => (
+            <span key={h.id}>
+              {i > 0 && " or "}
+              <a href={`mailto:${h.email}`} className="hover:underline" style={{ color: `var(--${h.color})` }}>
+                {h.shortName}
+              </a>
+            </span>
+          ))}
+          .
         </p>
       </section>
     </PageShell>

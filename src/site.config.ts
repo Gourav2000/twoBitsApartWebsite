@@ -1,14 +1,25 @@
 /**
- * Everything brand-specific lives here. Swap the placeholders for real
- * names, bios and links; every page reads from this file.
+ * Everything brand-specific lives here; every page reads from this file.
  */
+
+import type { StaticImageData } from "next/image";
+import gouravPhoto from "@/assets/hosts/gourav.jpg";
+import hindeshPhoto from "@/assets/hosts/hindesh.jpeg";
 
 export type Host = {
   id: "a" | "b";
   name: string;
+  /** First name, used in slide captions and speaker notes. */
+  shortName: string;
   role: string;
   bio: string;
   color: "blue" | "purple";
+  photo: StaticImageData;
+  /** CSS object-position for the photo crop (face centred in a circle). */
+  photoFocus?: string;
+  /** Zoom into photoFocus (1 = no zoom); for full-body shots. */
+  photoZoom?: number;
+  email: string;
   links: { label: string; href: string }[];
 };
 
@@ -23,24 +34,35 @@ export const site = {
   hosts: [
     {
       id: "a",
-      name: "Host A",
+      name: "Gourav Sarkar",
+      shortName: "Gourav",
       role: "Co-host",
-      bio: "Placeholder bio. A sentence or two about who you are, what you build, and why you care about understanding AI from the ground up.",
+      // TODO: Gourav, rewrite this in your own words
+      bio: "Engineer who builds for the web, 3D worlds included. On Two Bits Apart: rebuilding AI from first principles, with no magic imports. The math is worked out by hand first, then the code.",
       color: "blue",
+      photo: gouravPhoto,
+      photoFocus: "44% 20%",
+      photoZoom: 2,
+      email: "gouravsarkar67@gmail.com",
       links: [
-        { label: "LinkedIn", href: "#" },
-        { label: "GitHub", href: "#" },
+        { label: "LinkedIn", href: "https://www.linkedin.com/in/gouravsarkardev/" },
+        { label: "Website", href: "https://www.gouravsarkar.com/" },
       ],
     },
     {
       id: "b",
-      name: "Host B",
+      name: "Hindesh Akash",
+      shortName: "Hindesh",
       role: "Co-host",
-      bio: "Placeholder bio. The one who asks the 'wait, but why?' questions so the audience doesn't have to.",
+      // TODO: Hindesh, rewrite this in your own words
+      bio: "Builds AI products, taking them from idea to production. On Two Bits Apart: taking those systems apart again, all the way down to the single neuron.",
       color: "purple",
+      photo: hindeshPhoto,
+      photoFocus: "50% 30%",
+      email: "hindeshwork@gmail.com",
       links: [
-        { label: "LinkedIn", href: "#" },
-        { label: "GitHub", href: "#" },
+        { label: "LinkedIn", href: "https://www.linkedin.com/in/hindesh-akash/" },
+        { label: "Website", href: "https://www.aihindesh.com/" },
       ],
     },
   ] satisfies Host[],
@@ -52,6 +74,4 @@ export const site = {
     { label: "Apple Podcasts", href: "#" },
     { label: "Instagram", href: "#" },
   ],
-
-  contactEmail: "hello@example.com", // TODO
 } as const;

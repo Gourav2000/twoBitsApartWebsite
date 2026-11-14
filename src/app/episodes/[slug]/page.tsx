@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageShell } from "@/components/SiteChrome";
+import { HostAvatar } from "@/components/HostAvatar";
 import { EpisodeChapters, EpisodeSlides, SlideCount } from "@/components/episode/EpisodeSlides";
 import { episodeCode, episodes, getEpisode, getSeries } from "@/content/episodes";
 import { site } from "@/site.config";
@@ -46,12 +47,13 @@ export default async function EpisodePage({ params }: Props) {
           <h1 className="font-display mt-3 text-4xl font-bold tracking-tight sm:text-6xl">{ep.title}</h1>
           <p className="mt-3 text-lg text-muted sm:text-xl">{ep.subtitle}</p>
           <p className="mt-6 max-w-3xl leading-relaxed text-muted">{ep.description}</p>
-          <div className="mt-6 flex flex-wrap items-center gap-2 text-sm">
+          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3 text-sm">
             <span className="text-faint">with</span>
             {site.hosts.map((h) => (
-              <span key={h.id} className="font-semibold" style={{ color: `var(--${h.color})` }}>
+              <Link key={h.id} href="/about/" className="flex items-center gap-2.5 font-semibold hover:underline" style={{ color: `var(--${h.color})` }}>
+                <HostAvatar host={h} size={32} />
                 {h.name}
-              </span>
+              </Link>
             ))}
           </div>
           {live ? (

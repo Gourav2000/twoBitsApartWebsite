@@ -285,7 +285,8 @@ export function ActivationPlot({ kind }: { kind: "relu" | "sigmoid" }) {
   for (let i = 0; i <= 120; i++) {
     const z = -4 + (8 * i) / 120;
     const a = kind === "relu" ? Math.max(0, z) / 4 : 1 / (1 + Math.exp(-z));
-    pts.push(`${200 + z * 45},${230 - a * 170}`);
+    // rounded so server- and client-rendered markup match exactly (no hydration mismatch)
+    pts.push(`${(200 + z * 45).toFixed(2)},${(230 - a * 170).toFixed(2)}`);
   }
   return (
     <svg viewBox="0 0 420 270" width={460} height={290}>

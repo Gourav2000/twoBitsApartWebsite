@@ -65,7 +65,13 @@ export function SiteFooter() {
           <ul className="mt-4 space-y-2 text-sm">
             <li><Link href="/episodes/" className="text-muted hover:text-text">All episodes</Link></li>
             <li><Link href="/about/" className="text-muted hover:text-text">About the hosts</Link></li>
-            <li><a href={`mailto:${site.contactEmail}`} className="text-muted hover:text-text">{site.contactEmail}</a></li>
+            {site.hosts.map((h) => (
+              <li key={h.id}>
+                <a href={`mailto:${h.email}`} className="text-muted hover:text-text">
+                  Email {h.shortName}
+                </a>
+              </li>
+            ))}
           </ul>
         </div>
       </div>

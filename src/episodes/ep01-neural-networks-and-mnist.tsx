@@ -23,8 +23,8 @@ import {
 } from "./ep01-diagrams";
 
 const hosts = site.hosts.map((h) => ({ name: h.name, color: h.color }));
-const A = site.hosts[0].name;
-const B = site.hosts[1].name;
+const A = site.hosts[0].shortName;
+const B = site.hosts[1].shortName;
 
 // ─────────────────────────────────────────────────────────────────────────
 // Opening
@@ -1062,7 +1062,7 @@ const Outro = () => (
         Subscribe so you don’t miss <b className="text-text">Episode 2: micrograd</b>.
       </p>
       <p className="mt-3 text-[26px] text-faint">
-        {A} · {B} · slides and code at {site.url.replace(/^https?:\/\//, "")}
+        {site.hosts[0].name} · {site.hosts[1].name} · slides at {site.url.replace(/^https?:\/\//, "")}
       </p>
     </div>
   </div>
