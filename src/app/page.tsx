@@ -90,7 +90,7 @@ export default function Home() {
           {[
             ["01", "Two voices", "One explains, one asks the questions you’re thinking. Nobody nods along to math they don’t get."],
             ["02", "From scratch", "NumPy before frameworks. If we use an idea, we derive it, compute it by hand, then code it."],
-            ["03", "Slides you can play with", "Every episode’s slides live here, with live widgets you can poke while you listen."],
+            ["03", "Notes you can play with", "Every episode is a page of notes here, with live widgets you can poke while you listen."],
           ].map(([n, h, d]) => (
             <div key={n} className="rounded-2xl border border-border bg-surface p-6">
               <span className="font-mono text-sm text-purple">{n}</span>

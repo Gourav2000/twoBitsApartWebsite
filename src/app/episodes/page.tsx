@@ -11,8 +11,8 @@ export default function EpisodesPage() {
       <section className="mx-auto max-w-6xl px-4 pt-16 sm:px-6">
         <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">Episodes</h1>
         <p className="mt-3 max-w-2xl text-muted">
-          Every episode, every slide. Open one to read along, or hit <b className="text-text">Present</b> to see it the way we
-          record it.
+          Every episode, written up as notes. Open one to read along; the widgets in it are live, so you can poke at them while
+          you listen.
         </p>
       </section>
       {series.map((s, i) => (
