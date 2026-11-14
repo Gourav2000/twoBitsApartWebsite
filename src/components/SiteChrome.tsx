@@ -6,6 +6,7 @@ import { site } from "@/site.config";
 
 const nav = [
   { href: "/episodes/", label: "Episodes" },
+  { href: "/basics/", label: "Basics" },
   { href: "/about/", label: "About" },
 ];
 
@@ -69,6 +70,7 @@ export function SiteFooter() {
           <h3 className="font-display text-xs tracking-widest text-faint uppercase">Site</h3>
           <ul className="mt-4 space-y-2 text-sm">
             <li><Link href="/episodes/" className="text-muted hover:text-text">All episodes</Link></li>
+            <li><Link href="/basics/" className="text-muted hover:text-text">Basics of ML</Link></li>
             <li><Link href="/about/" className="text-muted hover:text-text">About the hosts</Link></li>
             {site.hosts.map((h) => (
               <li key={h.id}>

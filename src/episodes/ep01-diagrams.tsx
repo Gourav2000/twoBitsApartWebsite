@@ -196,7 +196,7 @@ export function PictureTwo() {
           <line className="draw" data-hidden={!step1} x1={0} y1={0} x2={220} y2={220} stroke="#e9edf5" strokeWidth={4} />
           <g className="reveal-fade" data-hidden={!step2}>
             <line x1={-10} y1={30} x2={190} y2={230} stroke="#8d97ab" strokeWidth={2} strokeDasharray="6 6" />
-            <line x1={40} y1={-10} x2={230} y2={180} stroke="#8d97ab" strokeWidth={2} strokeDasharray="6 6" />
+            <line x1={30} y1={-10} x2={230} y2={190} stroke="#8d97ab" strokeWidth={2} strokeDasharray="6 6" />
             <text x={14} y={14} fill="#c08bff" fontSize={18}>margin</text>
           </g>
           {blue.map(([x, y], i) => <circle key={`b${i}`} cx={x} cy={y} r={8} fill="var(--blue)" />)}

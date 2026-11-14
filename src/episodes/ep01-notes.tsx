@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { Code } from "@/components/Code";
 import { M, MB } from "@/components/Math";
@@ -9,7 +10,7 @@ import { NeuronCalculator } from "@/components/widgets/NeuronCalculator";
 import { FlatVector, PixelGrid, sevenLarge, sevenSmall } from "@/components/widgets/PixelGrid";
 import { SoftmaxPlayground } from "@/components/widgets/SoftmaxPlayground";
 import { site } from "@/site.config";
-import { ActivationPlot, NetworkDiagram, NeuronDiagram, PictureOne, PictureTwo } from "./ep01-diagrams";
+import { ActivationPlot, NetworkDiagram, NeuronDiagram } from "./ep01-diagrams";
 
 const [A, B] = site.hosts;
 
@@ -129,80 +130,18 @@ export function Ep01Notes() {
         <M>{String.raw`f(x) \approx y`}</M>.
       </p>
 
-      <H3 id="toolbox">The ML toolbox: five ways to learn f</H3>
-      <Say host={B}>Why neural networks at all?</Say>
-      <table>
-        <thead>
-          <tr>
-            <th>Method</th>
-            <th>The idea</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Linear / logistic regression</td>
-            <td>
-              One weighted sum <M>{String.raw`w^\top x + b`}</M>, then a threshold. Draws a straight line between classes.
-            </td>
-          </tr>
-          <tr>
-            <td>k-Nearest Neighbours</td>
-            <td>
-              No training at all. Find the <M>k</M> most similar training images and let them vote.
-            </td>
-          </tr>
-          <tr>
-            <td>Decision tree / Random forest</td>
-            <td>A flowchart of yes/no questions. A forest averages many trees.</td>
-          </tr>
-          <tr>
-            <td>Support Vector Machine</td>
-            <td>
-              A linear model that picks the <span className="hl">widest-margin</span> boundary; kernels let it bend.
-            </td>
-          </tr>
-          <tr>
-            <td>Neural network</td>
-            <td>Many weighted sums stacked in layers, with a nonlinearity between them.</td>
-          </tr>
-        </tbody>
-      </table>
+      <H3 id="toolbox">Where we start</H3>
+      <Say host={B}>Why neural networks at all? What about the classical algorithms?</Say>
       <p>
-        Same job, same data. An SVM is one weighted sum with the widest margin; a neural network stacks many. We build those
-        two.
+        Linear and logistic regression, k-NN, trees and SVMs all learn the same <M>f</M> from the same data, and they work
+        well on MNIST. We won’t re-teach them here. If you want the quick refresher, it’s on one page:{" "}
+        <Link href="/basics/">Basics of ML</Link>.
       </p>
-      <Embed width={1300} caption="Linear model, k-NN and a decision tree on the same toy data.">
-        <PictureOne />
-      </Embed>
-      <Embed width={1300} caption="The two we will build: an SVM with its margin and support vectors, and a small network.">
-        <PictureTwo />
-      </Embed>
-      <Columns>
-        <Card title="SVM: one smart boundary" tone="blue">
-          <ul>
-            <li>Treats the 784 numbers as a point in space.</li>
-            <li>
-              Finds the boundary with the <span className="hl">largest gap</span> to each class.
-            </li>
-            <li>
-              <b>Kernel trick:</b> bend the boundary without hand-made features.
-            </li>
-            <li>A strong baseline, and fast to train on small data.</li>
-          </ul>
-        </Card>
-        <Card title="Neural network: learned features" tone="purple">
-          <ul>
-            <li>
-              Starts from the same weighted sum <M>{String.raw`w^\top x + b`}</M>.
-            </li>
-            <li>Stacks layers, so early layers find strokes and later ones find shapes.</li>
-            <li>Trained by nudging weights downhill.</li>
-            <li>
-              The same recipe scales <span className="hl">all the way to GPT</span>.
-            </li>
-          </ul>
-        </Card>
-      </Columns>
+      <Callout icon="➡️" tone="purple">
+        A neural network is where those ideas meet: it starts from the same weighted sum <M>{String.raw`w^\top x + b`}</M>,
+        stacks many of them in layers, and learns the features instead of having us design them. That’s what we build.
+      </Callout>
+      <Cue>Say it in one breath, then move on. Don’t explain any of the classical methods on air.</Cue>
 
       <H3 id="neuron">The neuron: a weighted vote</H3>
       <Embed width={1100}>
