@@ -39,7 +39,7 @@ export function SoftmaxPlayground() {
             </button>
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-4">
-                <span className="w-24 text-[20px] text-muted">score z</span>
+                <span className="w-24 text-[20px] text-muted">score o</span>
                 <input
                   type="range"
                   min={-4}
@@ -88,11 +88,11 @@ export function SoftmaxPlayground() {
             </thead>
             <tbody>
               <tr>
-                <td className="font-sans text-muted">z</td>
+                <td className="font-sans text-muted">o</td>
                 {classes.map((c) => <td key={c.label} className="text-right">{c.z.toFixed(1)}</td>)}
               </tr>
               <tr>
-                <td className="font-sans text-muted"><M>{"e^{z}"}</M></td>
+                <td className="font-sans text-muted"><M>{"e^{o}"}</M></td>
                 {exps.map((e, i) => <td key={i} className="text-right">{e.toFixed(2)}</td>)}
               </tr>
               <tr className="text-[#c08bff]">
@@ -102,7 +102,7 @@ export function SoftmaxPlayground() {
             </tbody>
           </table>
           <div className="mt-3 border-t border-border pt-3 text-[20px] text-muted">
-            sum of <M>{"e^{z}"}</M> = <span className="font-mono text-text">{sum.toFixed(2)}</span> · probabilities sum to{" "}
+            sum of <M>{"e^{o}"}</M> = <span className="font-mono text-text">{sum.toFixed(2)}</span> · probabilities sum to{" "}
             <span className="font-mono text-text">{probs.reduce((a, b) => a + b, 0).toFixed(2)}</span>
           </div>
         </div>

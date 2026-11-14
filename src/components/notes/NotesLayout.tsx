@@ -83,12 +83,27 @@ export function NotesLayout({
     } catch {}
   }, [size]);
 
-  // build the outline from the headings on the page
+  // build the outline from the headings on the page, and rebuild it whenever the
+  // document changes (sections added, removed or renamed), so it never goes stale
   useEffect(() => {
     const el = docRef.current;
     if (!el) return;
-    const hs = Array.from(el.querySelectorAll<HTMLElement>("[data-toc]"));
-    setToc(hs.map((h) => ({ id: h.id, text: h.firstChild?.textContent ?? "", level: Number(h.dataset.toc) })));
+    const build = () => {
+      const hs = Array.from(el.querySelectorAll<HTMLElement>("[data-toc]"));
+      const next = hs.map((h) => ({ id: h.id, text: h.firstChild?.textContent ?? "", level: Number(h.dataset.toc) }));
+      setToc((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next));
+    };
+    build();
+    let raf = 0;
+    const mo = new MutationObserver(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(build);
+    });
+    mo.observe(el, { childList: true, subtree: true, characterData: true });
+    return () => {
+      mo.disconnect();
+      cancelAnimationFrame(raf);
+    };
   }, []);
 
   // scroll-spy + reading progress

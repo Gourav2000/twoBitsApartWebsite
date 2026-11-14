@@ -313,6 +313,12 @@ input[type="range"].tba-range::-moz-range-thumb {
   border-radius: 10px;
   padding: 0.85em 1.1em;
 }
+.notes .callout-plain {
+  border: 0;
+  background: none;
+  padding-left: 0;
+  padding-right: 0;
+}
 .notes .callout-icon {
   font-size: 1.15em;
   line-height: 1.5;
@@ -469,8 +475,63 @@ input[type="range"].tba-range::-moz-range-thumb {
   color: #c08bff;
 }
 .notes h4 {
+  scroll-margin-top: 7.5rem;
   margin-top: 1.6em;
   font-family: var(--font-grotesk), sans-serif;
   font-weight: 650;
   color: var(--text);
+}
+
+/* Jupyter-style notebook cells */
+.notes .nb-cell {
+  margin-top: 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+}
+.notes .nb-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75em;
+}
+.notes .nb-prompt {
+  flex-shrink: 0;
+  width: 5.6em;
+  white-space: nowrap;
+  padding-top: 0.95em;
+  text-align: right;
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 0.72em;
+}
+.notes .nb-in {
+  color: var(--blue);
+}
+.notes .nb-out {
+  color: #c08bff;
+  padding-top: 0.5em;
+}
+.notes .nb-code {
+  border-radius: 10px;
+}
+.notes .nb-output {
+  min-width: 0;
+  flex: 1;
+  overflow-x: auto;
+  margin: 0;
+  padding: 0.45em 0.2em;
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 0.8em;
+  color: var(--muted);
+  white-space: pre;
+}
+@media (max-width: 640px) {
+  .notes .nb-row {
+    flex-direction: column;
+    gap: 0.2em;
+  }
+  .notes .nb-prompt {
+    width: auto;
+    padding-top: 0;
+    text-align: left;
+  }
 }

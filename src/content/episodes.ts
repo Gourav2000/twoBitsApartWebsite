@@ -50,7 +50,7 @@ export const episodes: Episode[] = [
     title: "Neural Networks and MNIST",
     subtitle: "How a computer learns to read a handwritten digit",
     description:
-      "What actually happens between clicking PREDICT and seeing “it’s a 7”? We open the black box: pixels become numbers, neurons take weighted votes, softmax turns scores into probabilities, and backprop plus gradient descent move a random network from 10% to 97%. Then we wrap the NumPy model in a FastAPI service.",
+      "What actually happens between clicking PREDICT and seeing “it’s a 7”? We open the black box: pixels become numbers, neurons take weighted votes, softmax turns scores into probabilities, and backprop plus gradient descent move a random network from 10% to 97%. Then we code the whole network in NumPy and wrap it in a FastAPI service.",
     status: "published",
     topics: [
       "pixels",

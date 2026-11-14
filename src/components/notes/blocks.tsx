@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
+import { Code } from "@/components/Code";
 import { StepContext } from "@/components/deck/context";
 import { HostAvatar } from "@/components/HostAvatar";
 import type { Host } from "@/site.config";
@@ -47,15 +48,18 @@ export function Callout({
   tone = "neutral",
   title,
   children,
+  plain = false,
 }: {
   icon?: string;
   tone?: Tone;
   title?: React.ReactNode;
   children: React.ReactNode;
+  /** no box or background: just icon, coloured title and text */
+  plain?: boolean;
 }) {
   const t = tones[tone];
   return (
-    <div className="callout" style={{ borderColor: t.border, background: t.bg }}>
+    <div className={`callout ${plain ? "callout-plain" : ""}`} style={plain ? undefined : { borderColor: t.border, background: t.bg }}>
       <span className="callout-icon" aria-hidden>
         {icon}
       </span>
@@ -228,5 +232,23 @@ export function Wiki({ to, children }: { to: string; children: React.ReactNode }
     <a href={`#${to}`} className="wikilink">
       {children}
     </a>
+  );
+}
+
+/** A Jupyter-style notebook cell: "In [n]:" gutter, code, and optional output. */
+export function Cell({ n, code, output }: { n: number; code: string; output?: string }) {
+  return (
+    <div className="nb-cell wide">
+      <div className="nb-row">
+        <span className="nb-prompt nb-in">In [{n}]:</span>
+        <Code code={code} className="nb-code min-w-0 flex-1 text-[0.8em]" />
+      </div>
+      {output && (
+        <div className="nb-row">
+          <span className="nb-prompt nb-out">Out [{n}]:</span>
+          <pre className="nb-output">{output.trim()}</pre>
+        </div>
+      )}
+    </div>
   );
 }

@@ -40,7 +40,7 @@ function Slider({
   );
 }
 
-/** Live single neuron: z = w·x + b, then ReLU or sigmoid. */
+/** Live single neuron y₁: Σ = x·w, then y₁ = σ(Σ + b₁) with σ = ReLU or sigmoid. */
 export function NeuronCalculator() {
   const [x, setX] = useState([1.0, 0.5, -1.0]);
   const [w, setW] = useState([0.8, -0.4, 0.3]);
@@ -48,9 +48,11 @@ export function NeuronCalculator() {
   const [act, setAct] = useState<"relu" | "sigmoid">("relu");
 
   const terms = x.map((xi, i) => xi * w[i]);
-  const z = terms.reduce((s, t) => s + t, 0) + b;
-  const a = act === "relu" ? Math.max(0, z) : sigmoid(z);
-  const silent = act === "relu" && z <= 0;
+  const sum = terms.reduce((s, t) => s + t, 0);
+  const pre = sum + b;
+  const out = act === "relu" ? Math.max(0, pre) : sigmoid(pre);
+  const silent = act === "relu" && pre <= 0;
+  const actName = act === "relu" ? "ReLU" : "sigmoid";
 
   const setAt = (arr: number[], set: (v: number[]) => void, i: number) => (v: number) => {
     const n = arr.slice();
@@ -58,8 +60,14 @@ export function NeuronCalculator() {
     set(n);
   };
 
-  // diagram geometry
-  const ys = [70, 190, 310];
+  // diagram geometry: same layout and names as the zoomed-in neuron diagram
+  const ys = [80, 200, 320];
+  const SUM = { x: 430, y: 200 };
+  const ACT = { x: 570, y: 200 };
+  const OUT = { x: 718, y: 200 };
+  const mono = "var(--font-jetbrains)";
+  const subs = ["₁", "₂", "₃"];
+
   return (
     <div className="grid h-full grid-cols-[560px_1fr] gap-12 text-[24px]">
       <div className="flex flex-col gap-4">
@@ -71,7 +79,7 @@ export function NeuronCalculator() {
         {w.map((v, i) => (
           <Slider key={`w${i}`} label={`w_${i + 1}`} value={v} onChange={setAt(w, setW, i)} tone="purple" />
         ))}
-        <Slider label="b" value={b} onChange={setB} tone="purple" />
+        <Slider label="b_1" value={b} onChange={setB} tone="purple" />
         <div className="mt-3 flex gap-3 text-[20px]">
           <button
             onClick={() => setX([-x[0], x[1], x[2]])}
@@ -104,51 +112,109 @@ export function NeuronCalculator() {
       </div>
 
       <div className="flex flex-col">
-        <svg viewBox="0 0 760 380" className="w-full">
+        <svg viewBox="0 0 760 400" className="w-full">
+          <defs>
+            <marker id="ncArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="#e9edf5" />
+            </marker>
+            <marker id="ncArrowL" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="#c08bff" />
+            </marker>
+          </defs>
+
+          {/* inputs and weighted connections into Σ */}
           {ys.map((y, i) => {
             const wi = w[i];
             const col = wi >= 0 ? "var(--blue)" : "var(--red)";
             return (
               <g key={i}>
-                <line x1={90} y1={y} x2={420} y2={190} stroke={col} strokeWidth={1.5 + Math.abs(wi) * 10} strokeOpacity={0.25 + Math.abs(wi) * 0.75} />
-                <circle cx={60} cy={y} r={38} fill="#0b0f19" stroke="#e9edf5" strokeWidth={2} />
-                <text x={60} y={y + 8} textAnchor="middle" fill="#e9edf5" fontSize={24} fontFamily="var(--font-jetbrains)">
+                <line
+                  x1={104}
+                  y1={y}
+                  x2={SUM.x - 40}
+                  y2={SUM.y}
+                  stroke={col}
+                  strokeWidth={1.5 + Math.abs(wi) * 9}
+                  strokeOpacity={0.25 + Math.abs(wi) * 0.75}
+                />
+                <circle cx={70} cy={y} r={34} fill="#0b0f19" stroke="var(--blue)" strokeWidth={2.5} />
+                <text x={70} y={y + 7} textAnchor="middle" fill="#e9edf5" fontSize={20} fontFamily={mono}>
                   {f(x[i], 1)}
                 </text>
-                <text x={250} y={y + (190 - y) * 0.5 - 14} textAnchor="middle" fill={col} fontSize={22} fontFamily="var(--font-jetbrains)">
-                  ×{f(wi, 1)} = {f(terms[i])}
+                <text x={22} y={y - 30} fill="#3d8bff" fontSize={20} fontStyle="italic">
+                  x
+                  <tspan fontSize={14} dy={5} fontStyle="normal">
+                    {i + 1}
+                  </tspan>
+                </text>
+                <text x={238} y={y + (SUM.y - y) * 0.45 - 12} textAnchor="middle" fill="#ffb547" fontSize={18} fontFamily={mono}>
+                  × w{subs[i]} ({f(wi, 1)})
                 </text>
               </g>
             );
           })}
-          <line x1={470} y1={60} x2={470} y2={140} stroke="#c79bff" strokeWidth={2} />
-          <text x={470} y={48} textAnchor="middle" fill="#c79bff" fontSize={22} fontFamily="var(--font-jetbrains)">
-            + b ({f(b, 1)})
+
+          {/* the bias goes into the activation */}
+          <text x={ACT.x} y={58} textAnchor="middle" fill="#c08bff" fontSize={19} fontStyle="italic">
+            bias b₁ = {f(b, 1)}
           </text>
-          <circle cx={470} cy={190} r={52} fill="rgba(61,139,255,.15)" stroke="var(--blue)" strokeWidth={3} />
-          <text x={470} y={200} textAnchor="middle" fill="#e9edf5" fontSize={34}>Σ</text>
-          <line x1={522} y1={190} x2={598} y2={190} stroke="#e9edf5" strokeWidth={2} />
-          <text x={560} y={176} textAnchor="middle" fill="#e9edf5" fontSize={20} fontFamily="var(--font-jetbrains)">
-            {f(z)}
+          <line x1={ACT.x} y1={68} x2={ACT.x} y2={ACT.y - 54} stroke="#c08bff" strokeWidth={2} markerEnd="url(#ncArrowL)" />
+
+          {/* ONE neuron: Σ, then σ(Σ + b₁) */}
+          <rect x={372} y={128} width={268} height={160} rx={34} fill="rgba(164,92,255,.08)" stroke="var(--purple)" strokeWidth={3} />
+          <text x={506} y={316} textAnchor="middle" fill="#c08bff" fontSize={19} fontWeight={700}>
+            one neuron: y₁
           </text>
-          <circle cx={645} cy={190} r={46} fill={silent ? "#0b0f19" : "rgba(164,92,255,.25)"} stroke="var(--purple)" strokeWidth={3} />
-          <text x={645} y={199} textAnchor="middle" fill="#e9edf5" fontSize={24}>
-            {act === "relu" ? "ReLU" : "σ"}
+
+          <circle cx={SUM.x} cy={SUM.y} r={38} fill="#0b0f19" stroke="var(--blue)" strokeWidth={2.5} />
+          <text x={SUM.x} y={SUM.y - 2} textAnchor="middle" fill="#e9edf5" fontSize={26}>
+            Σ
           </text>
-          <line x1={691} y1={190} x2={750} y2={190} stroke="#e9edf5" strokeWidth={2} />
+          <text x={SUM.x} y={SUM.y + 22} textAnchor="middle" fill="#e9edf5" fontSize={15} fontFamily={mono}>
+            {f(sum)}
+          </text>
+          <text x={SUM.x} y={SUM.y + 60} textAnchor="middle" fill="#3d8bff" fontSize={14} fontWeight={700}>
+            weighted sum
+          </text>
+
+          <line x1={SUM.x + 40} y1={SUM.y} x2={ACT.x - 54} y2={ACT.y} stroke="#e9edf5" strokeWidth={2} markerEnd="url(#ncArrow)" />
+
+          <circle cx={ACT.x} cy={ACT.y} r={52} fill={silent ? "#0b0f19" : "rgba(164,92,255,.25)"} stroke="var(--purple)" strokeWidth={2.5} />
+          <text x={ACT.x} y={ACT.y - 2} textAnchor="middle" fill="#e9edf5" fontSize={17} fontStyle="italic">
+            σ(Σ + b₁)
+          </text>
+          <text x={ACT.x} y={ACT.y + 22} textAnchor="middle" fill="#e9edf5" fontSize={15} fontFamily={mono}>
+            {f(pre)}
+          </text>
+          <text x={ACT.x} y={ACT.y + 72} textAnchor="middle" fill="#c08bff" fontSize={14} fontWeight={700}>
+            activation: {actName}
+          </text>
+
+          {/* output */}
+          <line x1={640} y1={OUT.y} x2={OUT.x - 32} y2={OUT.y} stroke="#e9edf5" strokeWidth={2} markerEnd="url(#ncArrow)" />
+          <circle cx={OUT.x} cy={OUT.y} r={30} fill={silent ? "#0b0f19" : "rgba(164,92,255,.3)"} stroke="#c08bff" strokeWidth={3} />
+          <text x={OUT.x - 1} y={OUT.y + 7} textAnchor="middle" fill="#e9edf5" fontSize={20} fontStyle="italic" fontWeight={700}>
+            y
+            <tspan fontSize={13} dy={5} fontStyle="normal">
+              1
+            </tspan>
+          </text>
+          <text x={OUT.x} y={OUT.y + 56} textAnchor="middle" fill={silent ? "#5b657a" : "#e9edf5"} fontSize={17} fontFamily={mono}>
+            {f(out, 2)}
+          </text>
         </svg>
 
-        <div className="mt-2 rounded-2xl border border-border-strong bg-surface/70 px-6 py-4 text-[26px] leading-[1.7]">
+        <div className="mt-2 rounded-2xl border border-border-strong bg-surface/70 px-6 py-4 text-[24px] leading-[1.75]">
           <div>
-            <M>{String.raw`z = ${terms.map((t, i) => `(${f(w[i], 1)})(${f(x[i], 1)})`).join("+")} + ${f(b, 1)}`}</M>
+            <M>{String.raw`\Sigma = ${terms.map((_, i) => `(${f(x[i], 1)})(${f(w[i], 1)})`).join(" + ")} = ${f(sum)}`}</M>
           </div>
           <div>
-            <M>{String.raw`z = ${f(z)}`}</M>
+            <M>{String.raw`\Sigma + b_1 = ${f(sum)} + (${f(b, 1)}) = ${f(pre)}`}</M>
           </div>
           <div className="flex items-center gap-4">
-            <M>{String.raw`a = ${act === "relu" ? "\\mathrm{ReLU}" : "\\sigma"}(${f(z)}) = `}</M>
-            <span className={`font-mono text-[34px] font-bold ${silent ? "text-faint" : "text-gradient"}`}>{f(a, 3)}</span>
-            {silent && <span className="text-[22px] text-muted">the neuron stays silent</span>}
+            <M>{String.raw`y_1 = \mathrm{${actName}}(${f(pre)}) = `}</M>
+            <span className={`font-mono text-[32px] font-bold ${silent ? "text-faint" : "text-gradient"}`}>{f(out, 3)}</span>
+            {silent && <span className="text-[20px] text-muted">the neuron stays silent</span>}
           </div>
         </div>
       </div>
