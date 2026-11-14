@@ -19,6 +19,9 @@ jobs:
   ci:
     name: Lint, typecheck & build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read # lets configure-pages read the site's URL / custom domain
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -34,13 +37,20 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      # Ask GitHub where the site is served: "" on a custom domain (twobitsapart.com),
+      # "/twoBitsApartWebsite" on the default github.io URL. The build follows automatically.
+      - name: Read Pages config
+        id: pages
+        uses: actions/configure-pages@v5
+
       - name: Build static site
         run: npm run build
         env:
-          # Same base path as the live site, so PRs test the real deploy build.
-          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+          NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}
 
       - name: Smoke-test export
+        env:
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}
         run: |
           set -euo pipefail
           for page in index.html about/index.html episodes/index.html; do
@@ -59,7 +69,8 @@ jobs:
             test -f "out/episodes/$slug/present/index.html" || { echo "missing present page: $slug"; exit 1; }
             echo "ok: $slug"
           done
-          grep -q "/${{ github.event.repository.name }}/_next/" out/index.html || { echo "base path missing from assets"; exit 1; }
+          grep -q "\"${BASE_PATH}/_next/" out/index.html || { echo "assets not under base path '${BASE_PATH}'"; exit 1; }
+          echo "base path: '${BASE_PATH}'"
           touch out/.nojekyll
 
       - name: Upload Pages artifact
