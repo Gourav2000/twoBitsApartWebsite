@@ -19,6 +19,8 @@ export type Host = {
   photoFocus?: string;
   /** Zoom into photoFocus (1 = no zoom); for full-body shots. */
   photoZoom?: number;
+  /** object-position for the large portrait on the About page. */
+  portraitFocus?: string;
   email: string;
   links: { label: string; href: string }[];
 };
@@ -38,11 +40,12 @@ export const site = {
       shortName: "Gourav",
       role: "Co-host",
       // TODO: Gourav, rewrite this in your own words
-      bio: "Engineer who builds for the web, 3D worlds included. On Two Bits Apart: rebuilding AI from first principles, with no magic imports. The math is worked out by hand first, then the code.",
+      bio: "Engineer who builds for the web. On Two Bits Apart: rebuilding AI from first principles, with no magic imports. The math is worked out by hand first, then the code.",
       color: "blue",
       photo: gouravPhoto,
       photoFocus: "44% 20%",
       photoZoom: 2,
+      portraitFocus: "50% 12%",
       email: "gouravsarkar67@gmail.com",
       links: [
         { label: "LinkedIn", href: "https://www.linkedin.com/in/gouravsarkardev/" },

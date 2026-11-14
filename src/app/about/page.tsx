@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PageShell } from "@/components/SiteChrome";
 import { LogoMark } from "@/components/Logo";
-import { HostAvatar } from "@/components/HostAvatar";
+import { HostPortrait } from "@/components/HostPortrait";
 import { site } from "@/site.config";
 
 export const metadata: Metadata = { title: "About" };
@@ -31,18 +31,17 @@ export default function AboutPage() {
         <h2 className="font-display text-xs tracking-[0.3em] text-faint uppercase">The hosts</h2>
         <div className="mt-6 grid gap-5 sm:grid-cols-2">
           {site.hosts.map((h) => (
-            <div key={h.id} className={`rounded-2xl border bg-surface p-6 ${h.color === "blue" ? "border-blue/40" : "border-purple/40"}`}>
-              <div className="flex items-center gap-4">
-                <HostAvatar host={h} size={72} />
-                <div>
-                  <div className="font-display text-xl font-bold" style={{ color: `var(--${h.color})` }}>
-                    {h.name}
-                  </div>
-                  <div className="text-sm text-faint">{h.role}</div>
-                </div>
+            <div
+              key={h.id}
+              className={`flex flex-col items-center rounded-2xl border bg-surface px-6 pt-12 pb-7 text-center ${h.color === "blue" ? "border-blue/40" : "border-purple/40"}`}
+            >
+              <HostPortrait host={h} />
+              <div className="font-display mt-9 text-2xl font-bold" style={{ color: `var(--${h.color})` }}>
+                {h.name}
               </div>
-              <p className="mt-4 text-sm leading-relaxed text-muted">{h.bio}</p>
-              <div className="mt-5 flex flex-wrap gap-2 text-sm">
+              <div className="mt-1 text-sm text-faint">{h.role}</div>
+              <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted">{h.bio}</p>
+              <div className="mt-auto flex flex-wrap justify-center gap-2 pt-6 text-sm">
                 {h.links.map((l) => (
                   <a
                     key={l.label}
