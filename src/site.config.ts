@@ -3,7 +3,7 @@
  */
 
 import type { StaticImageData } from "next/image";
-// Transparent cut-outs (background removed; Gourav mirrored to face right).
+// Transparent cut-outs. Gourav's is the same photo as the hero on gouravsarkar.com.
 import gouravPhoto from "@/assets/hosts/gourav.png";
 import hindeshPhoto from "@/assets/hosts/hindesh.png";
 
@@ -20,8 +20,8 @@ export type Host = {
   photoFocus?: string;
   /** Zoom into photoFocus (1 = no zoom); for full-body shots. */
   photoZoom?: number;
-  /** Placement of the cut-out inside the About-page oval: image width and top offset, as % of the frame. */
-  portrait?: { width: number; top: number };
+  /** Optional placement inside the About-page oval, as % of the frame: image width, top offset, x = horizontal centre (default 50). Omit to fill the oval anchored to the top. */
+  portrait?: { width: number; top: number; x?: number };
   email: string;
   links: { label: string; href: string }[];
 };
@@ -44,9 +44,9 @@ export const site = {
       bio: "Engineer who builds for the web. On Two Bits Apart: rebuilding AI from first principles, with no magic imports. The math is worked out by hand first, then the code.",
       color: "blue",
       photo: gouravPhoto,
-      photoFocus: "56% 9%",
+      photoFocus: "52% 5%",
       photoZoom: 2,
-      portrait: { width: 100, top: 10 },
+      portrait: { width: 100, top: 6 },
       email: "gouravsarkar67@gmail.com",
       links: [
         { label: "LinkedIn", href: "https://www.linkedin.com/in/gouravsarkardev/" },
@@ -74,10 +74,13 @@ export const site = {
   ] satisfies Host[],
 
   // Where people can listen / watch. Use "#" until a channel exists.
+  // Header "Newsletter" button. TODO: link to the newsletter sign-up page.
+  newsletterUrl: "#",
+
   channels: [
-    { label: "YouTube", href: "#" },
-    { label: "Spotify", href: "#" },
-    { label: "Apple Podcasts", href: "#" },
-    { label: "Instagram", href: "#" },
+    // TODO: paste the Discord and Devpost links
+    { label: "YouTube", href: "https://www.youtube.com/@twobitsapart", icon: "youtube" },
+    { label: "Discord", href: "#", icon: "discord" },
+    { label: "Devpost", href: "#", icon: "devpost" },
   ],
 } as const;

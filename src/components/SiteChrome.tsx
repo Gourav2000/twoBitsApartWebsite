@@ -1,3 +1,5 @@
+import { CopyEmail } from "@/components/CopyEmail";
+import { ChannelIcon } from "@/components/ChannelIcon";
 import Link from "next/link";
 import { LogoMark, Wordmark } from "./Logo";
 import { site } from "@/site.config";
@@ -26,10 +28,12 @@ export function SiteHeader() {
             </Link>
           ))}
           <a
-            href={site.channels[0].href}
+            href={site.newsletterUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             className="ml-2 rounded-full bg-gradient-brand px-4 py-1.5 font-medium text-white transition hover:opacity-90"
           >
-            Subscribe
+            Newsletter
           </a>
         </nav>
       </div>
@@ -53,7 +57,8 @@ export function SiteFooter() {
           <ul className="mt-4 space-y-2 text-sm">
             {site.channels.map((c) => (
               <li key={c.label}>
-                <a href={c.href} className="text-muted transition hover:text-text">
+                <a href={c.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-muted transition hover:text-text">
+                  <ChannelIcon name={c.icon} size={15} />
                   {c.label}
                 </a>
               </li>
@@ -67,9 +72,7 @@ export function SiteFooter() {
             <li><Link href="/about/" className="text-muted hover:text-text">About the hosts</Link></li>
             {site.hosts.map((h) => (
               <li key={h.id}>
-                <a href={`mailto:${h.email}`} className="text-muted hover:text-text">
-                  Email {h.shortName}
-                </a>
+                <CopyEmail email={h.email} size="sm" />
               </li>
             ))}
           </ul>

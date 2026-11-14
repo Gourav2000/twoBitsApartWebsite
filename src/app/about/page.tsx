@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { PageShell } from "@/components/SiteChrome";
 import { LogoMark } from "@/components/Logo";
 import { HostPortrait } from "@/components/HostPortrait";
+import { CopyEmail } from "@/components/CopyEmail";
+import { ChannelIcon } from "@/components/ChannelIcon";
 import { site } from "@/site.config";
 
 export const metadata: Metadata = { title: "About" };
@@ -41,24 +43,21 @@ export default function AboutPage() {
               </div>
               <div className="mt-1 text-sm text-faint">{h.role}</div>
               <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted">{h.bio}</p>
-              <div className="mt-auto flex flex-wrap justify-center gap-2 pt-6 text-sm">
-                {h.links.map((l) => (
-                  <a
-                    key={l.label}
-                    href={l.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-full border border-border-strong px-4 py-1.5 text-muted transition hover:bg-surface-2 hover:text-text"
-                  >
-                    {l.label} ↗
-                  </a>
-                ))}
-                <a
-                  href={`mailto:${h.email}`}
-                  className="rounded-full border border-border-strong px-4 py-1.5 text-muted transition hover:bg-surface-2 hover:text-text"
-                >
-                  Email
-                </a>
+              <div className="mt-auto flex flex-col items-center gap-3 pt-6">
+                <div className="flex flex-wrap justify-center gap-2 text-sm">
+                  {h.links.map((l) => (
+                    <a
+                      key={l.label}
+                      href={l.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-full border border-border-strong px-4 py-1.5 text-muted transition hover:bg-surface-2 hover:text-text"
+                    >
+                      {l.label} ↗
+                    </a>
+                  ))}
+                </div>
+                <CopyEmail email={h.email} color={h.color} />
               </div>
             </div>
           ))}
@@ -69,23 +68,24 @@ export default function AboutPage() {
         <h2 className="font-display text-xs tracking-[0.3em] text-faint uppercase">Listen & watch</h2>
         <div className="mt-6 flex flex-wrap gap-3">
           {site.channels.map((c) => (
-            <a key={c.label} href={c.href} className="rounded-full border border-border-strong px-5 py-2.5 text-sm hover:bg-surface">
+            <a
+              key={c.label}
+              href={c.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2.5 rounded-full border border-border-strong px-5 py-2.5 text-sm transition hover:bg-surface"
+            >
+              <ChannelIcon name={c.icon} brand />
               {c.label}
             </a>
           ))}
         </div>
-        <p className="mt-8 text-sm text-muted">
-          Questions, corrections, episode ideas: write to{" "}
-          {site.hosts.map((h, i) => (
-            <span key={h.id}>
-              {i > 0 && " or "}
-              <a href={`mailto:${h.email}`} className="hover:underline" style={{ color: `var(--${h.color})` }}>
-                {h.shortName}
-              </a>
-            </span>
+        <p className="mt-8 text-sm text-muted">Questions, corrections, episode ideas? Write to either of us:</p>
+        <div className="mt-3 flex flex-wrap gap-3">
+          {site.hosts.map((h) => (
+            <CopyEmail key={h.id} email={h.email} color={h.color} />
           ))}
-          .
-        </p>
+        </div>
       </section>
     </PageShell>
   );
