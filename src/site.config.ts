@@ -32,7 +32,7 @@ export const site = {
   tagline: "Two engineers. One idea at a time. AI built from scratch.",
   description:
     "Two Bits Apart is a podcast where two engineers rebuild modern AI from first principles, from a single neuron all the way to GPT, explained out loud and coded live.",
-  url: "https://gourav2000.github.io/twoBitsApartWebsite", // TODO: swap for a custom domain later
+  url: "https://twobitsapart.com",
 
   hosts: [
     {
