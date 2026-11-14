@@ -3,8 +3,9 @@
  */
 
 import type { StaticImageData } from "next/image";
-import gouravPhoto from "@/assets/hosts/gourav.jpg";
-import hindeshPhoto from "@/assets/hosts/hindesh.jpeg";
+// Transparent cut-outs (background removed; Gourav mirrored to face right).
+import gouravPhoto from "@/assets/hosts/gourav.png";
+import hindeshPhoto from "@/assets/hosts/hindesh.png";
 
 export type Host = {
   id: "a" | "b";
@@ -19,8 +20,8 @@ export type Host = {
   photoFocus?: string;
   /** Zoom into photoFocus (1 = no zoom); for full-body shots. */
   photoZoom?: number;
-  /** object-position for the large portrait on the About page. */
-  portraitFocus?: string;
+  /** Placement of the cut-out inside the About-page oval: image width and top offset, as % of the frame. */
+  portrait?: { width: number; top: number };
   email: string;
   links: { label: string; href: string }[];
 };
@@ -43,9 +44,9 @@ export const site = {
       bio: "Engineer who builds for the web. On Two Bits Apart: rebuilding AI from first principles, with no magic imports. The math is worked out by hand first, then the code.",
       color: "blue",
       photo: gouravPhoto,
-      photoFocus: "44% 20%",
+      photoFocus: "56% 9%",
       photoZoom: 2,
-      portraitFocus: "50% 12%",
+      portrait: { width: 100, top: 10 },
       email: "gouravsarkar67@gmail.com",
       links: [
         { label: "LinkedIn", href: "https://www.linkedin.com/in/gouravsarkardev/" },
@@ -61,7 +62,9 @@ export const site = {
       bio: "Builds AI products, taking them from idea to production. On Two Bits Apart: taking those systems apart again, all the way down to the single neuron.",
       color: "purple",
       photo: hindeshPhoto,
-      photoFocus: "50% 30%",
+      photoFocus: "50% 20%",
+      photoZoom: 1.25,
+      portrait: { width: 118, top: 12 },
       email: "hindeshwork@gmail.com",
       links: [
         { label: "LinkedIn", href: "https://www.linkedin.com/in/hindesh-akash/" },

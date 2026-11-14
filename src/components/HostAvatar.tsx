@@ -5,7 +5,7 @@ import type { Host } from "@/site.config";
 export function HostAvatar({ host, size = 56 }: { host: Host; size?: number }) {
   return (
     <span
-      className="inline-block shrink-0 overflow-hidden rounded-full"
+      className="inline-block shrink-0 overflow-hidden rounded-full bg-bg-2"
       style={{
         width: size,
         height: size,
