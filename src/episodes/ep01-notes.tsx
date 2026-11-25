@@ -103,7 +103,8 @@ export function Ep01Notes() {
       <Say host={A}>Before any theory, show me it working.</Say>
       <Say host={B}>Here’s the app: upload a digit, hit PREDICT, and see what comes back.</Say>
       <Cue>Switch to the running app. Upload two or three digits, including one that fails.</Cue>
-      <Code className="mt-4 text-[0.82em]" code={`$ uvicorn main:app --reload   # → http://127.0.0.1:8000`} />
+      <Code className="mt-4 text-[0.82em]" code={`# start the API server, then open http://127.0.0.1:8000
+$ uvicorn main:app --reload`} />
       <p>What you just saw: an image goes in, a digit comes out, and we have no idea why.</p>
       <Figure wide={false}>
         <Flow steps={["handwritten image", "???", <b key="7">7 · confidence 0.99</b>]} accent={[1]} />
@@ -1134,9 +1135,11 @@ export function Ep01Notes() {
       <Cell
         n={1}
         code={`
-import numpy as np                  # the only library the model uses
+# the only library the model uses
+import numpy as np
 
-rng = np.random.default_rng(0)      # fixed seed: same "random" numbers every run
+# a random number generator with a fixed seed, so every run is the same
+rng = np.random.default_rng(0)
 `}
       />
       <Say host={B}>Where does the data come from?</Say>
@@ -1147,14 +1150,21 @@ rng = np.random.default_rng(0)      # fixed seed: same "random" numbers every ru
       <Cell
         n={2}
         code={`
-import urllib.request               # part of Python itself, not an ML library
+# Python's built-in downloader, not an ML library
+import urllib.request
 
+# where MNIST lives, as one NumPy file
 url = "https://storage.googleapis.com/tensorflow/tf-keras-datasets/mnist.npz"
+# download it and save it as mnist.npz
 urllib.request.urlretrieve(url, "mnist.npz")
 
+# open the file
 data = np.load("mnist.npz")
+# 60,000 training images and their labels
 x_train, y_train = data["x_train"], data["y_train"]
+# 10,000 test images and their labels
 x_test,  y_test  = data["x_test"],  data["y_test"]
+# check the sizes
 print(x_train.shape, y_train.shape, x_test.shape)
 `}
         output="(60000, 28, 28) (60000,) (10000, 28, 28)"
@@ -1164,28 +1174,57 @@ print(x_train.shape, y_train.shape, x_test.shape)
       <Cell
         n={3}
         code={`
+# which digit the first training image is
 print("label:", y_train[0])
+# its darkest and brightest pixel values
 print("pixel range:", x_train[0].min(), "to", x_train[0].max())
 `}
         output={`
 label: 5
 pixel range: 0 to 255`}
       />
+      <Say host={B}>Can we actually see that first image? The one labelled 5?</Say>
+      <Say host={A}>
+        Yes. Matplotlib can draw the 28 × 28 grid of numbers as a picture: 0 as black, 255 as white. It should look like a
+        handwritten 5.
+      </Say>
+      <Cell
+        n={4}
+        code={`
+# only for drawing pictures (the model itself stays pure NumPy)
+import matplotlib.pyplot as plt
+
+# draw the first training image: each of the 28 × 28 numbers becomes a grey square
+plt.imshow(x_train[0], cmap="gray")
+# put its label on top: it should say 5
+plt.title(f"label: {y_train[0]}")
+# show the scale beside it: 0 is black, 255 is white
+plt.colorbar()
+# display the picture
+plt.show()
+`}
+      />
+      <Cue>Point out that the picture is just those numbers: every square is one pixel value from 0 to 255.</Cue>
       <Say host={B}>But the network wants 784 numbers between 0 and 1.</Say>
       <Say host={A}>
         So I flatten each grid into 784 numbers, divide by 255, and put one image per column, exactly like the <M>x</M> in our
         maths. Then I split off 5,000 training images for validation.
       </Say>
       <Cell
-        n={4}
+        n={5}
         code={`
+# turn raw images into what the network expects
 def prep(x):
-    # (n, 28, 28) of 0–255  →  (784, n) of 0–1, one image per column
+    # flatten to 784, scale to 0–1, one image per column
     return (x.reshape(len(x), 784) / 255.0).T.astype(np.float32)
 
+# first 55,000 to train, last 5,000 to validate
 X_train, X_val = prep(x_train[:55000]), prep(x_train[55000:])
+# their labels, split the same way
 t_train, t_val = y_train[:55000], y_train[55000:]
+# the 10,000 test images, kept aside
 X_test,  t_test = prep(x_test), y_test
+# check the sizes
 print(X_train.shape, X_val.shape, X_test.shape)
 `}
         output="(784, 55000) (784, 5000) (784, 10000)"
@@ -1198,20 +1237,32 @@ print(X_train.shape, X_val.shape, X_test.shape)
         come to exactly the number we counted earlier.
       </Say>
       <Cell
-        n={5}
+        n={6}
         code={`
+# build the network's random starting point
 def init_params():
+    # weights and biases for one layer
     def layer(n_out, n_in):
-        W = rng.standard_normal((n_out, n_in)) * np.sqrt(2 / n_in)   # small random numbers
-        b = np.zeros((n_out, 1))                                       # biases start at 0
+        # small random weights, one per connection
+        W = rng.standard_normal((n_out, n_in)) * np.sqrt(2 / n_in)
+        # biases start at 0
+        b = np.zeros((n_out, 1))
+        # hand both back
         return W, b
+    # a dictionary to hold every parameter
     p = {}
-    p["W1"], p["b1"] = layer(128, 784)    # input    → hidden 1
-    p["W2"], p["b2"] = layer(64, 128)     # hidden 1 → hidden 2
-    p["W3"], p["b3"] = layer(10, 64)      # hidden 2 → output
+    # input → hidden layer 1
+    p["W1"], p["b1"] = layer(128, 784)
+    # hidden layer 1 → hidden layer 2
+    p["W2"], p["b2"] = layer(64, 128)
+    # hidden layer 2 → output
+    p["W3"], p["b3"] = layer(10, 64)
+    # the whole random network
     return p
 
+# make one
 params = init_params()
+# count every weight and bias
 print(sum(v.size for v in params.values()))
 `}
         output="109386"
@@ -1223,21 +1274,32 @@ print(sum(v.size for v in params.values()))
       <Say host={B}>Now the forward pass?</Say>
       <Say host={A}>The same four lines as the theory: ReLU twice, then the ten scores, then softmax.</Say>
       <Cell
-        n={6}
+        n={7}
         code={`
+# the activation function
 def relu(s):
+    # negatives become 0, positives pass through
     return np.maximum(0, s)
 
+# turn scores into probabilities
 def softmax(o):
-    o = o - o.max(axis=0, keepdims=True)     # subtract the max: same answer, no overflow
+    # subtract the biggest score: same answer, no overflow
+    o = o - o.max(axis=0, keepdims=True)
+    # e to the power of each score
     e = np.exp(o)
+    # divide by the total, so they add up to 1
     return e / e.sum(axis=0, keepdims=True)
 
+# one pass from pixels to probabilities
 def forward(X, p):
-    y = relu(p["W1"] @ X + p["b1"])          # hidden layer 1: (128, n)
-    z = relu(p["W2"] @ y + p["b2"])          # hidden layer 2: (64, n)
-    o = p["W3"] @ z + p["b3"]                # 10 scores:      (10, n)
-    return y, z, softmax(o)                  # keep y and z: backprop needs them
+    # hidden layer 1: 128 numbers per image
+    y = relu(p["W1"] @ X + p["b1"])
+    # hidden layer 2: 64 numbers per image
+    z = relu(p["W2"] @ y + p["b2"])
+    # 10 scores per image
+    o = p["W3"] @ z + p["b3"]
+    # keep y and z: backprop needs them
+    return y, z, softmax(o)
 `}
       />
       <Say host={B}>How will you know if it’s working?</Say>
@@ -1246,17 +1308,23 @@ def forward(X, p):
         score about 10%. Remember the pause and predict?
       </Say>
       <Cell
-        n={7}
+        n={8}
         code={`
+# the loss: how wrong we are
 def cross_entropy(P, t):
-    # P: (10, n) probabilities, t: the n true digits → average of −log p_t
+    # average of −log(probability given to the true digit)
     return -np.log(P[t, np.arange(len(t))] + 1e-12).mean()
 
+# what fraction of images it gets right
 def accuracy(X, t, p):
+    # run the network
     _, _, P = forward(X, p)
+    # compare its top guess with the truth
     return (P.argmax(axis=0) == t).mean()
 
+# try the untrained network on validation images
 _, _, P = forward(X_val, params)
+# expect about 10%: it's guessing
 print("loss:", cross_entropy(P, t_val), " accuracy:", accuracy(X_val, t_val, params))
 `}
       />
@@ -1272,20 +1340,31 @@ print("loss:", cross_entropy(P, t_val), " accuracy:", accuracy(X_val, t_val, par
         layer, in the same order: output, then hidden 2, then hidden 1.
       </Say>
       <Cell
-        n={8}
+        n={9}
         code={`
+# backprop: a slope for every parameter
 def backward(X, t, p, y, z, P):
+    # how many images are in this batch
     n = X.shape[1]
+    # an empty 10 × n grid
     T = np.zeros_like(P)
-    T[t, np.arange(n)] = 1                   # one-hot truth: a 1 for the true digit
+    # one-hot truth: a 1 for the true digit
+    T[t, np.arange(n)] = 1
 
-    d_o = (P - T) / n                        # δo = p − t   (averaged over the batch)
-    d_z = (p["W3"].T @ d_o) * (z > 0)        # blame back through W3, then the ReLU gate
-    d_y = (p["W2"].T @ d_z) * (y > 0)        # blame back through W2, then the ReLU gate
+    # output blame: p − t, averaged over the batch
+    d_o = (P - T) / n
+    # blame back through W3, then the ReLU gate
+    d_z = (p["W3"].T @ d_o) * (z > 0)
+    # blame back through W2, then the ReLU gate
+    d_y = (p["W2"].T @ d_z) * (y > 0)
 
-    return {                                 # gradient = blame × incoming value
+    # each gradient = blame × incoming value
+    return {
+        # output layer
         "W3": d_o @ z.T, "b3": d_o.sum(axis=1, keepdims=True),
+        # hidden layer 2
         "W2": d_z @ y.T, "b2": d_z.sum(axis=1, keepdims=True),
+        # hidden layer 1
         "W1": d_y @ X.T, "b1": d_y.sum(axis=1, keepdims=True),
     }
 `}
@@ -1296,20 +1375,32 @@ def backward(X, t, p, y, z, P):
         slope. If that matches what backprop says, backprop is right.
       </Say>
       <Cell
-        n={9}
+        n={10}
         code={`
+# a small batch of 32 images
 Xb, tb = X_train[:, :32], t_train[:32]
+# forward pass
 y, z, P = forward(Xb, params)
+# backprop's slopes
 grads = backward(Xb, tb, params, y, z, P)
 
+# a tiny nudge
 eps = 1e-5
+# one weight from each layer
 for name, (i, j) in [("W1", (5, 400)), ("W2", (10, 20)), ("W3", (7, 3))]:
+    # remember its value
     old = params[name][i, j]
+    # nudge it up
     params[name][i, j] = old + eps
+    # the loss, nudged up
     up = cross_entropy(forward(Xb, params)[2], tb)
+    # nudge it down
     params[name][i, j] = old - eps
+    # the loss, nudged down
     down = cross_entropy(forward(Xb, params)[2], tb)
-    params[name][i, j] = old                              # put it back
+    # put it back
+    params[name][i, j] = old
+    # the two slopes should match
     print(name, " backprop:", grads[name][i, j], "  nudge:", (up - down) / (2 * eps))
 `}
       />
@@ -1325,21 +1416,34 @@ for name, (i, j) in [("W1", (5, 400)), ("W2", (10, 20)), ("W3", (7, 3))]:
         <Wiki to="loop">training loop</Wiki>.
       </Say>
       <Cell
-        n={10}
+        n={11}
         code={`
-params = init_params()                                # a fresh random start
+# a fresh random start
+params = init_params()
+# step size, images per batch, passes over the data
 lr, batch, epochs = 0.1, 64, 10
 
+# repeat 10 times
 for epoch in range(epochs):
-    order = rng.permutation(X_train.shape[1])         # shuffle every epoch
+    # shuffle the images
+    order = rng.permutation(X_train.shape[1])
+    # go through them 64 at a time
     for k in range(0, len(order), batch):
+        # which images are in this batch
         idx = order[k:k + batch]
+        # the batch and its labels
         Xb, tb = X_train[:, idx], t_train[idx]
-        y, z, P = forward(Xb, params)                 # 1. forward
-        loss = cross_entropy(P, tb)                   # 2. loss
-        grads = backward(Xb, tb, params, y, z, P)     # 3. backward
-        for name in params:                           # 4. update
+        # 1. forward
+        y, z, P = forward(Xb, params)
+        # 2. loss
+        loss = cross_entropy(P, tb)
+        # 3. backward
+        grads = backward(Xb, tb, params, y, z, P)
+        # 4. update every parameter...
+        for name in params:
+            # ...one small step downhill
             params[name] -= lr * grads[name]
+    # progress after each epoch
     print(f"epoch {epoch + 1}: loss {loss:.3f}   val accuracy {accuracy(X_val, t_val, params):.2%}")
 `}
       />
@@ -1347,17 +1451,19 @@ for epoch in range(epochs):
       <Say host={B}>Is it done?</Say>
       <Say host={A}>One last check, on the 10,000 test images it has never seen. We run this exactly once.</Say>
       <Cell
-        n={11}
+        n={12}
         code={`
+# the final score, on images it has never seen
 print(f"test accuracy: {accuracy(X_test, t_test, params):.2%}")
 `}
       />
       <Say host={B}>Do we keep these weights?</Say>
       <Say host={A}>I save all 109,386 numbers to one file, model_numpy.npz, so the NumPy model is never lost.</Say>
       <Cell
-        n={12}
+        n={13}
         code={`
-np.savez("model_numpy.npz", **params)   # W1, b1, W2, b2, W3, b3
+# save W1, b1, W2, b2, W3, b3 to one file
+np.savez("model_numpy.npz", **params)
 `}
       />
 
@@ -1368,14 +1474,18 @@ np.savez("model_numpy.npz", **params)   # W1, b1, W2, b2, W3, b3
         never seen.
       </Say>
       <Cell
-        n={13}
+        n={14}
         code={`
+# one image in → (digit, confidence) out
 def predict(x, p):
-    # one image (784 numbers) → the digit, and how sure the network is
+    # run it as a single column
     _, _, P = forward(x.reshape(784, 1), p)
+    # its top guess, and how sure it is
     return int(P.argmax()), float(P.max())
 
+# pick the first test image
 i = 0
+# the truth vs the network's answer
 print("true:", t_test[i], "  predicted:", predict(X_test[:, i], params))
 `}
       />
@@ -1385,18 +1495,25 @@ print("true:", t_test[i], "  predicted:", predict(X_test[:, i], params))
         right, red when it’s wrong. Matplotlib only draws the pictures; the model is still pure NumPy.
       </Say>
       <Cell
-        n={14}
+        n={15}
         code={`
-import matplotlib.pyplot as plt                         # only for drawing pictures
-
-idx = rng.choice(X_test.shape[1], 12, replace=False)   # 12 random test images
+# 12 random test images
+idx = rng.choice(X_test.shape[1], 12, replace=False)
+# a 2 × 6 grid of pictures
 fig, axes = plt.subplots(2, 6, figsize=(10, 4))
+# one picture per image
 for ax, i in zip(axes.flat, idx):
+    # ask the network
     digit, conf = predict(X_test[:, i], params)
+    # draw the digit
     ax.imshow(X_test[:, i].reshape(28, 28), cmap="gray")
+    # title: its guess and the truth
     ax.set_title(f"pred {digit} ({conf:.0%})\\ntrue {t_test[i]}",
+                 # green if right, red if wrong
                  color="green" if digit == t_test[i] else "red")
+    # hide the axes
     ax.axis("off")
+# display the grid
 plt.show()
 `}
       />
@@ -1407,17 +1524,26 @@ plt.show()
         squint at too.
       </Say>
       <Cell
-        n={15}
+        n={16}
         code={`
+# run all 10,000 test images
 _, _, P = forward(X_test, params)
-wrong = np.flatnonzero(P.argmax(axis=0) != t_test)     # indices it got wrong
+# positions of the ones it got wrong
+wrong = np.flatnonzero(P.argmax(axis=0) != t_test)
+# how many mistakes
 print(len(wrong), "mistakes out of", len(t_test))
 
+# a row of 6 pictures
 fig, axes = plt.subplots(1, 6, figsize=(10, 2.2))
+# the first 6 mistakes
 for ax, i in zip(axes, wrong[:6]):
+    # draw the digit
     ax.imshow(X_test[:, i].reshape(28, 28), cmap="gray")
+    # what it said vs the truth
     ax.set_title(f"pred {P[:, i].argmax()}   true {t_test[i]}", color="red")
+    # hide the axes
     ax.axis("off")
+# display them
 plt.show()
 `}
       />
@@ -1428,7 +1554,7 @@ plt.show()
       </p>
       <Callout plain icon="✅" tone="green" title="That’s the whole network">
         Data, a random start, the forward pass, the loss, backprop, a gradient check, the training loop, and a model you
-        can watch read digits: fifteen cells of NumPy, and every line is something from Part 1.
+        can watch read digits: sixteen cells of NumPy, and every line is something from Part 1.
       </Callout>
 
       <H3 id="nb-torch">Now the same thing in PyTorch</H3>
@@ -1506,12 +1632,15 @@ plt.show()
       <Say host={B}>What changes first?</Say>
       <Say host={A}>Just the import: PyTorch, and its own fixed seed.</Say>
       <Cell
-        n={16}
+        n={17}
         code={`
+# PyTorch
 import torch
+# its ready-made layers
 from torch import nn
 
-torch.manual_seed(0)                # PyTorch's own random numbers, repeatable too
+# fixed seed, so runs repeat
+torch.manual_seed(0)
 `}
       />
       <Say host={B}>Do we load the data again?</Say>
@@ -1520,16 +1649,23 @@ torch.manual_seed(0)                # PyTorch's own random numbers, repeatable t
         <code>DataLoader</code> does the shuffling and batching we wrote by hand.
       </Say>
       <Cell
-        n={17}
+        n={18}
         code={`
+# tools that batch the data for us
 from torch.utils.data import TensorDataset, DataLoader
 
-Xtr = torch.from_numpy(X_train.T.copy())          # (55000, 784): one image per row
+# training images as a tensor, one image per row
+Xtr = torch.from_numpy(X_train.T.copy())
+# validation images
 Xva = torch.from_numpy(X_val.T.copy())
+# test images
 Xte = torch.from_numpy(X_test.T.copy())
+# the labels, as whole numbers
 ttr, tva, tte = (torch.from_numpy(t).long() for t in (t_train, t_val, t_test))
 
+# hands out shuffled batches of 64
 loader = DataLoader(TensorDataset(Xtr, ttr), batch_size=64, shuffle=True)
+# check the sizes
 print(Xtr.shape, ttr.shape)
 `}
         output="torch.Size([55000, 784]) torch.Size([55000])"
@@ -1540,14 +1676,20 @@ print(Xtr.shape, ttr.shape)
         number of parameters.
       </Say>
       <Cell
-        n={18}
+        n={19}
         code={`
+# layers that run one after another
 model = nn.Sequential(
-    nn.Linear(784, 128), nn.ReLU(),     # y = ReLU(W1 x + b1)
-    nn.Linear(128, 64),  nn.ReLU(),     # z = ReLU(W2 y + b2)
-    nn.Linear(64, 10),                  # o = W3 z + b3   (no softmax here: the loss does it)
+    # y = ReLU(W1 x + b1)
+    nn.Linear(784, 128), nn.ReLU(),
+    # z = ReLU(W2 y + b2)
+    nn.Linear(128, 64),  nn.ReLU(),
+    # o = W3 z + b3 (no softmax: the loss does it)
+    nn.Linear(64, 10),
 )
+# count every weight and bias
 print(sum(p.numel() for p in model.parameters()))
+# first layer's weights: same shape as our W1
 print(model[0].weight.shape)
 `}
         output={`
@@ -1564,13 +1706,18 @@ torch.Size([128, 784])`}
         scores. The optimiser is our update rule. And backprop is one line: <code>loss.backward()</code>.
       </Say>
       <Cell
-        n={19}
+        n={20}
         code={`
-loss_fn = nn.CrossEntropyLoss()                      # softmax + cross-entropy, on the raw scores o
-opt = torch.optim.SGD(model.parameters(), lr=0.1)    # w ← w − η · ∂L/∂w
+# softmax + cross-entropy, on the raw scores
+loss_fn = nn.CrossEntropyLoss()
+# our update rule: w ← w − η · slope
+opt = torch.optim.SGD(model.parameters(), lr=0.1)
 
+# what fraction of images it gets right
 def torch_accuracy(X, t):
-    with torch.no_grad():                            # only predicting: no gradients needed
+    # only predicting: no gradients needed
+    with torch.no_grad():
+        # top guess vs truth, averaged
         return (model(X).argmax(dim=1) == t).float().mean().item()
 `}
       />
@@ -1585,15 +1732,23 @@ def torch_accuracy(X, t):
       <Say host={B}>Same training loop as before?</Say>
       <Say host={A}>Same four steps. Except step 3, backward, is now one line.</Say>
       <Cell
-        n={20}
+        n={21}
         code={`
+# 10 passes over the data
 for epoch in range(10):
-    for xb, tb in loader:                    # shuffled batches of 64
-        o = model(xb)                        # 1. forward
-        loss = loss_fn(o, tb)                # 2. loss
-        opt.zero_grad()                      #    clear the last step's gradients
-        loss.backward()                      # 3. backward: autograd does all of our backprop
-        opt.step()                           # 4. update every parameter
+    # shuffled batches of 64
+    for xb, tb in loader:
+        # 1. forward
+        o = model(xb)
+        # 2. loss
+        loss = loss_fn(o, tb)
+        # clear the last step's slopes
+        opt.zero_grad()
+        # 3. backward: autograd does all of our backprop
+        loss.backward()
+        # 4. update every parameter
+        opt.step()
+    # progress after each epoch
     print(f"epoch {epoch + 1}: loss {loss.item():.3f}   val accuracy {torch_accuracy(Xva, tva):.2%}")
 `}
       />
@@ -1603,10 +1758,12 @@ for epoch in range(10):
         Test once, then <code>torch.save</code> the weights to <code>model.pt</code>. That’s the file Part 3 serves.
       </Say>
       <Cell
-        n={21}
+        n={22}
         code={`
+# the final score, on unseen images
 print(f"test accuracy: {torch_accuracy(Xte, tte):.2%}")
-torch.save(model.state_dict(), "model.pt")           # Part 3 loads this file
+# save the trained weights for Part 3
+torch.save(model.state_dict(), "model.pt")
 `}
       />
 
@@ -1666,24 +1823,30 @@ torch.save(model.state_dict(), "model.pt")           # Part 3 loads this file
 
 
       {/* ──────────────────────────── Part 3 ──────────────────────────── */}
-      <H2 id="system">Part 3 · System design: the model behind an API</H2>
+      <H2 id="system">Part 3 · System design: build the app, step by step</H2>
       <Say host={B}>Gourav, we have a trained model. How does someone actually use it from a browser?</Say>
-      <Say host={A}>We wrap it in an API: the browser sends the image, the server runs the forward pass and sends back the answer.</Say>
+      <Say host={A}>
+        We wrap it in an API: the browser sends the image, the server runs the forward pass and sends back the answer. And
+        I’ll build it live, starting from an empty folder.
+      </Say>
 
       <H3 id="architecture">The architecture</H3>
       <Figure>
         <div className="grid items-center gap-3 text-sm md:grid-cols-[1fr_auto_1.2fr_auto_1fr]">
           <div className="rounded-xl border border-blue/50 bg-blue/10 p-3 text-center">
-            <div className="font-display font-bold">Browser UI</div>
-            <div className="mt-1 text-muted">upload image · PREDICT · digit + bars</div>
+            <div className="font-display font-bold">index.html</div>
+            <div className="mt-1 text-muted">choose an image · Predict · shows the digit</div>
           </div>
           <div className="text-center font-mono text-xs text-muted">
-            POST /predict →<br />← JSON
+            GET / → the page
+            <br />
+            POST /predict →
+            <br />← JSON
           </div>
           <div className="rounded-xl border border-purple/60 bg-purple/10 p-3 text-center">
-            <div className="font-display font-bold">FastAPI</div>
+            <div className="font-display font-bold">FastAPI (main.py)</div>
             <div className="mt-2 flex flex-col gap-1.5">
-              {["validate file", "preprocess", "forward pass"].map((s) => (
+              {["serve the page", "check the upload", "preprocess", "forward pass"].map((s) => (
                 <span key={s} className="rounded-md border border-border-strong bg-bg-2 py-1">
                   {s}
                 </span>
@@ -1693,148 +1856,505 @@ torch.save(model.state_dict(), "model.pt")           # Part 3 loads this file
           <div className="text-center font-mono text-xs text-muted">← load once</div>
           <div className="rounded-xl border border-border-strong bg-surface p-3 text-center">
             <div className="font-display font-bold">model.pt</div>
-            <div className="mt-1 text-muted">the trained PyTorch weights</div>
+            <div className="mt-1 text-muted">the trained weights from Part 2</div>
           </div>
         </div>
       </Figure>
       <p>
-        The UI sends the image as multipart form data; the weights are loaded <i>once</i> at startup. The response holds the
-        predicted digit, the confidence, and all 10 probabilities.
+        One small server does two jobs: it hands the browser the web page, and it answers <code>/predict</code>. The weights
+        are loaded <i>once</i>, when the server starts. Because the page and the API come from the same server, the page can
+        call the API directly, with no extra setup.
       </p>
+      <Say host={B}>Why not have the server build the page, with a template like Jinja2?</Say>
+      <Say host={A}>
+        We could. A template fills the answer into the HTML on the server and sends back a whole new page every time. But a
+        plain page that calls <code>/predict</code> itself is smaller, never reloads, and uses the very same API that anyone
+        else would.
+      </Say>
 
       <H3 id="api">The API contract</H3>
       <Say host={B}>What exactly does the browser send, and what comes back?</Say>
       <Say host={A}>It POSTs the image to /predict and gets back JSON: the digit, the confidence and all ten probabilities.</Say>
       <ul>
         <li>
-          <code>GET /health</code>: is the service up?
+          <code>GET /</code>: the web page.
         </li>
         <li>
-          <code>POST /predict</code>: image in, digit out. Request is <code>multipart/form-data</code>, field name{" "}
-          <code>file</code>.
+          <code>POST /predict</code>: image in, digit out. The request is <code>multipart/form-data</code>, with the image in
+          a field named <code>file</code>.
         </li>
         <li>
-          <code>GET /docs</code>: free interactive docs from FastAPI.
+          <code>GET /docs</code>: free interactive docs from FastAPI, where you can try <code>/predict</code> yourself.
+        </li>
+        <li>
+          Errors: <code>415</code> if the upload isn’t an image, <code>400</code> if it can’t be read or has no digit in it.
         </li>
       </ul>
       <Code
-        className="mt-4 text-[0.82em]"
         filename="response.json"
-        code={`{
+        lang="json"
+        className="mt-4 text-[0.82em]"
+        code={`
+{
+  // the network's answer
   "digit": 7,
+  // how sure it is: the top probability
   "confidence": 0.99,
+  // one probability per digit, 0 to 9...
   "probabilities": [0.00, 0.00, 0.01, 0.00, 0.00,
+  // ...and they add up to 1
                     0.00, 0.00, 0.99, 0.00, 0.00]
-}`}
+}
+`}
       />
 
-      <H3 id="preprocess">Preprocessing must match training</H3>
+      <H3 id="preprocess">Preprocessing: make every upload look like MNIST</H3>
       <Say host={B}>Why does preprocessing matter so much?</Say>
-      <Say host={A}>The model only knows MNIST-style digits: white on black, centred, 28×28. Everything else has to be converted first.</Say>
+      <Say host={A}>
+        The model only knows MNIST-style digits: white on black, about 20 pixels big, centred in a 28 × 28 square. Anything
+        else has to be turned into that first.
+      </Say>
       <Figure>
-        <Flow steps={["upload", "grayscale", "resize 28×28", "invert if dark-on-light", "÷255", "flatten 784"]} accent={[3]} />
+        <Flow
+          steps={[
+            "upload",
+            "grayscale",
+            "invert if dark-on-light",
+            "crop to the ink",
+            "fit in 20 × 20",
+            "centre in 28 × 28",
+            "shift by centre of mass",
+            "÷255, flatten 784",
+          ]}
+          accent={[2, 3, 5, 6]}
+        />
       </Figure>
       <ul>
         <li>
-          Same scaling as training: <M>{String.raw`[0, 1]`}</M>, float32.
+          MNIST is <span className="hl">white digit on black</span>; most uploads are dark ink on light paper, so invert.
         </li>
         <li>
-          MNIST is <span className="hl">white digit on black</span>; most uploads are the opposite, so invert.
+          MNIST digits were all scaled to fit a 20 × 20 box and then centred in 28 × 28 by their centre of mass. We do exactly
+          the same: crop to the ink, shrink to 20 × 20, paste in the middle, nudge to the centre.
         </li>
-        <li>Centre and crop to the digit; MNIST digits are centred.</li>
+        <li>
+          Why so fussy about position? Our network is fully connected: every weight belongs to one pixel position. A digit
+          shifted by a few pixels lands on completely different weights, and the network stops recognising it.
+        </li>
+        <li>
+          Same scaling as training: <M>{String.raw`[0, 1]`}</M>, then flattened to 784 numbers.
+        </li>
       </ul>
 
-      <H3 id="code">The code</H3>
-      <Say host={B}>Show me the code.</Say>
-      <Say host={A}>Two files: model.py loads the PyTorch model we trained in Part 2, and main.py is the API.</Say>
-      <h4>model.py: load the trained PyTorch model</h4>
-      <p>
-        Rebuild the same <code>nn.Sequential</code> from <Wiki to="nb-torch">Part 2</Wiki>, load the trained weights from{" "}
-        <code>model.pt</code> once, and switch to prediction mode. Training ended at the raw scores because the loss
-        applied softmax; here there’s no loss, so we apply softmax ourselves to get probabilities.
-      </p>
+      <H3 id="build-app">Build it, step by step</H3>
+      <Say host={B}>Okay. Empty folder. Where do we start?</Say>
+      <Say host={A}>
+        With the folder itself. Everything here is typed into PowerShell on Windows. By the end there are three small files
+        and one trained model.
+      </Say>
+      <Cue>Open a fresh PowerShell window and type each command live.</Cue>
+
+      <h4>Step 1: a folder for the app</h4>
+      <Code
+        filename="PowerShell"
+        lang="shell"
+        className="mt-4 text-[0.82em]"
+        code={`
+# make a new folder for the app
+mkdir digit-api
+# go into it
+cd digit-api
+`}
+      />
+
+      <h4>Step 2: a virtual environment</h4>
+      <Say host={B}>What’s a virtual environment, and why bother?</Say>
+      <Say host={A}>
+        A private copy of Python just for this project. Whatever we install goes in there, so it can’t clash with other
+        projects on the same computer.
+      </Say>
+      <Code
+        filename="PowerShell"
+        lang="shell"
+        className="mt-4 text-[0.82em]"
+        code={`
+# create a virtual environment: a private Python, in a folder called .venv
+python -m venv .venv
+# switch this window to use it: the prompt now starts with (.venv)
+.venv\\Scripts\\Activate.ps1
+`}
+      />
+      <Callout plain icon="🛑" tone="amber" title="If PowerShell says “running scripts is disabled”">
+        Windows blocks the activate script by default. Allow scripts for this one window only, then activate again:
+      <Code
+        filename="PowerShell"
+        lang="shell"
+        className="mt-4 text-[0.82em]"
+        code={`
+# allow scripts, for this PowerShell window only
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+# now activate again
+.venv\\Scripts\\Activate.ps1
+`}
+      />
+      </Callout>
+
+      <h4>Step 3: install the packages</h4>
+      <Say host={B}>What do we need to install?</Say>
+      <Say host={A}>
+        Three things for the web side (FastAPI, the uvicorn server, and upload support), and three for the model (PyTorch,
+        Pillow for images, NumPy).
+      </Say>
+      <Code
+        filename="PowerShell"
+        lang="shell"
+        className="mt-4 text-[0.82em]"
+        code={`
+# the web framework, the server that runs it, and support for file uploads
+python -m pip install fastapi uvicorn python-multipart
+# PyTorch for the model, Pillow to open images, NumPy for arrays
+python -m pip install torch pillow numpy
+`}
+      />
+
+      <h4>Step 4: bring in the trained model</h4>
+      <Say host={B}>Do we train the model again here?</Say>
+      <Say host={A}>
+        No. We trained it in Part 2 and saved it as <code>model.pt</code>. We just copy that file in, and create the three
+        files we’re about to write.
+      </Say>
+      <Code
+        filename="PowerShell"
+        lang="shell"
+        className="mt-4 text-[0.82em]"
+        code={`
+# copy model.pt from the Part 2 notebook's folder (change the path if yours is elsewhere)
+Copy-Item ..\\mnsistNumpy\\model.pt .
+# create the three empty files we're about to write
+New-Item model.py, main.py, index.html
+`}
+      />
+      <p>When we’re done, the folder looks like this:</p>
+      <Code
+        lang="text"
+        className="mt-4 text-[0.82em]"
+        code={`
+digit-api/
+├── .venv/        the virtual environment (made in step 2)
+├── model.pt      the trained weights (from Part 2)
+├── model.py      loads the model
+├── main.py       the API
+└── index.html    the web page
+`}
+      />
+
+      <h4>Step 5: model.py, load the trained model</h4>
+      <Say host={B}>First file?</Say>
+      <Say host={A}>
+        <code>model.py</code>. It rebuilds the same network from Part 2, loads the trained weights once, and gives us one
+        function: 784 numbers in, 10 probabilities out.
+      </Say>
       <Code
         filename="model.py"
         className="mt-4 text-[0.82em]"
-        highlightLines={[9, 16]}
         code={`
+# PyTorch
 import torch
+# its ready-made layers
 from torch import nn
 
-model = nn.Sequential(                  # the same network we trained in Part 2
+# the same network we trained in Part 2
+model = nn.Sequential(
+    # hidden layer 1
     nn.Linear(784, 128), nn.ReLU(),
-    nn.Linear(128, 64),  nn.ReLU(),
+    # hidden layer 2
+    nn.Linear(128, 64), nn.ReLU(),
+    # 10 scores
     nn.Linear(64, 10),
 )
-model.load_state_dict(torch.load("model.pt"))   # the trained weights, loaded once
-model.eval()                                     # predicting, not training
+# load the trained weights, once, when the server starts
+model.load_state_dict(torch.load("model.pt"))
+# predicting, not training
+model.eval()
 
-@torch.no_grad()                                 # no gradients needed to predict
+
+# no gradients needed to predict
+@torch.no_grad()
+# 784 numbers (0 to 1) in, 10 probabilities out
 def predict_probs(x):
-    """x: 784 numbers between 0 and 1  →  10 probabilities"""
-    o = model(torch.from_numpy(x).unsqueeze(0))  # (1, 10): one image's scores
-    return torch.softmax(o, dim=1)[0].numpy()   # softmax here, since there's no loss now
-`}
-      />
-      <h4>main.py: setup, preprocessing and the endpoint</h4>
-      <p>The highlighted lines are the inversion step. Without them a dark-on-light photo is out of distribution.</p>
-      <Code
-        filename="main.py"
-        className="mt-4 text-[0.82em]"
-        highlightLines={[11, 12]}
-        code={`
-from fastapi import FastAPI, UploadFile, File, HTTPException
-from PIL import Image
-import numpy as np, io
-from model import predict_probs           # the PyTorch model, loaded once in model.py
-
-app = FastAPI()
-
-def preprocess(raw: bytes) -> np.ndarray:
-    img = Image.open(io.BytesIO(raw)).convert("L").resize((28, 28))
-    x = np.asarray(img, dtype=np.float32) / 255.0
-    if x.mean() > 0.5:                    # dark ink on light paper?
-        x = 1.0 - x                       # make it white-on-black, like MNIST
-    return x.reshape(784)
-
-@app.get("/health")
-def health():
-    return {"status": "ok"}
-
-@app.post("/predict")
-async def predict(file: UploadFile = File(...)):
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=415, detail="Upload an image")
-    x = preprocess(await file.read())
-    probs = predict_probs(x)
-    return {"digit": int(probs.argmax()),
-            "confidence": float(probs.max()),
-            "probabilities": probs.tolist()}
+    # a batch of one image → its 10 scores
+    o = model(torch.from_numpy(x).unsqueeze(0))
+    # softmax here, since there's no loss now
+    return torch.softmax(o, dim=1)[0].numpy()
 `}
       />
       <p>
-        Run it with <code>uvicorn main:app --reload</code>, then open <code>/docs</code>.
+        Training ended at the raw scores because the loss applied softmax for us. Here there’s no loss, so we apply softmax
+        ourselves to get probabilities.
       </p>
+
+      <h4>Step 6: main.py, the API</h4>
+      <Say host={B}>And the API itself?</Say>
+      <Say host={A}>
+        <code>main.py</code>. Three parts: the preprocessing we just talked about, the page at <code>/</code>, and{" "}
+        <code>/predict</code>, which checks the upload, preprocesses it and runs the model.
+      </Say>
+      <Code
+        filename="main.py"
+        className="mt-4 text-[0.82em]"
+        code={`
+# reading the uploaded bytes like a file
+import io
+
+# arrays
+import numpy as np
+# the web framework
+from fastapi import FastAPI, File, HTTPException, UploadFile
+# sends a file from disk as the reply
+from fastapi.responses import FileResponse
+# for opening and resizing images
+from PIL import Image
+
+# the PyTorch model, loaded once in model.py
+from model import predict_probs
+
+# create the web app
+app = FastAPI()
+
+
+# uploaded file → 784 numbers between 0 and 1, laid out like an MNIST digit
+def preprocess(raw: bytes) -> np.ndarray:
+    try:
+        # open the upload and make it grayscale: one number per pixel, 0 to 255
+        gray = np.asarray(Image.open(io.BytesIO(raw)).convert("L"), dtype=np.float32)
+    except Exception:
+        # not something Pillow can open
+        raise HTTPException(status_code=400, detail="Couldn't read that image")
+    # mostly light? then it's dark ink on light paper
+    if gray.mean() > 127:
+        # flip it: white digit on black, like MNIST
+        gray = 255 - gray
+    # find the ink: every pixel brighter than a faint threshold
+    rows, cols = np.where(gray > 20)
+    # no ink at all? refuse it instead of crashing
+    if len(rows) == 0:
+        raise HTTPException(status_code=400, detail="No digit found in the image")
+    # crop to the box around the ink
+    digit = gray[rows.min() : rows.max() + 1, cols.min() : cols.max() + 1]
+    # back to an image so Pillow can resize it
+    img = Image.fromarray(digit.astype(np.uint8))
+    # shrink it so its longer side is 20 pixels, keeping its shape
+    scale = 20 / max(img.size)
+    # the new width and height, at least 1 pixel each
+    size = (max(1, round(img.width * scale)), max(1, round(img.height * scale)))
+    # resize smoothly
+    img = img.resize(size, Image.LANCZOS)
+    # a black 28 × 28 square, like an empty MNIST image
+    canvas = Image.new("L", (28, 28), 0)
+    # paste the digit in the middle
+    canvas.paste(img, ((28 - img.width) // 2, (28 - img.height) // 2))
+    # back to numbers
+    x = np.asarray(canvas, dtype=np.float32)
+    # every pixel's row and column number
+    ys, xs = np.indices(x.shape)
+    # the total ink
+    total = x.sum()
+    # move the digit so its centre of mass sits at the centre, as MNIST does
+    x = np.roll(x, round(14 - (x * ys).sum() / total), axis=0)
+    x = np.roll(x, round(14 - (x * xs).sum() / total), axis=1)
+    # scale to 0–1 and flatten to the 784 numbers the model expects
+    return (x / 255.0).reshape(784)
+
+
+# the address GET /: the web page
+@app.get("/")
+def home():
+    # a plain HTML file, no templates
+    return FileResponse("index.html")
+
+
+# the address POST /predict: an image in, a digit out
+@app.post("/predict")
+async def predict(file: UploadFile = File(...)):
+    # not an image? refuse it with an error
+    if not (file.content_type or "").startswith("image/"):
+        raise HTTPException(status_code=415, detail="Upload an image")
+    # read the file, turn it into 784 numbers
+    x = preprocess(await file.read())
+    # run the model
+    probs = predict_probs(x)
+    # the reply, as JSON
+    return {
+        # its top guess
+        "digit": int(probs.argmax()),
+        # how sure it is
+        "confidence": float(probs.max()),
+        # all 10 probabilities
+        "probabilities": probs.tolist(),
+    }
+`}
+      />
+
+      <h4>Step 7: index.html, a tiny web page</h4>
+      <Say host={B}>Now the page. Do we need a framework for that?</Say>
+      <Say host={A}>
+        No. One plain HTML file: a file picker, a preview, Predict and Clear. When you press Predict, a few lines of
+        JavaScript send the image to <code>/predict</code> and write the answer into the page.
+      </Say>
+      <Code
+        filename="index.html"
+        lang="html"
+        className="mt-4 text-[0.82em]"
+        code={`
+<!doctype html>
+<html>
+<head>
+  <!-- so special characters show correctly -->
+  <meta charset="utf-8">
+  <!-- the text on the browser tab -->
+  <title>Digit Predictor</title>
+  <style>
+    /* a narrow, centred column */
+    body { font-family: sans-serif; max-width: 420px; margin: 60px auto; text-align: center; }
+    /* keep the preview small */
+    #preview { max-width: 200px; margin-top: 16px; }
+    /* the predicted digit, big */
+    #digit { font-size: 64px; margin: 8px 0 0; }
+  </style>
+</head>
+<body>
+  <!-- the heading -->
+  <h1>Digit Predictor</h1>
+  <!-- choose an image file -->
+  <input type="file" id="file" accept="image/*">
+  <!-- the chosen image, hidden until there is one -->
+  <br><img id="preview" hidden><br>
+  <!-- send it to the model -->
+  <button id="predict">Predict</button>
+  <!-- start again -->
+  <button id="clear">Clear</button>
+  <!-- where the digit goes -->
+  <p id="digit"></p>
+  <!-- where the confidence goes -->
+  <p id="confidence"></p>
+
+  <script>
+    // the file picker
+    const file = document.getElementById("file");
+    // the preview image
+    const preview = document.getElementById("preview");
+    // the answer
+    const digit = document.getElementById("digit");
+    // the confidence
+    const confidence = document.getElementById("confidence");
+
+    // when a file is chosen...
+    file.onchange = () => {
+      // ...nothing chosen (cancelled)? do nothing
+      if (!file.files[0]) return;
+      // show the chosen image
+      preview.src = URL.createObjectURL(file.files[0]);
+      // make the preview visible
+      preview.hidden = false;
+      // wipe any old answer
+      digit.textContent = confidence.textContent = "";
+    };
+
+    // when Predict is clicked...
+    document.getElementById("predict").onclick = async () => {
+      // ...nothing chosen yet? do nothing
+      if (!file.files[0]) return;
+      // pack the file the way a form upload would
+      const form = new FormData();
+      // under the name the API expects: "file"
+      form.append("file", file.files[0]);
+      // POST it to /predict and wait for the reply
+      const res = await fetch("/predict", { method: "POST", body: form });
+      // read the JSON in the reply
+      const data = await res.json();
+      // an error (not an image, no digit found)? show its message instead
+      if (!res.ok) { digit.textContent = "?"; confidence.textContent = data.detail; return; }
+      // show the digit
+      digit.textContent = data.digit;
+      // and how sure the model is, as a percentage
+      confidence.textContent = "confidence " + Math.round(data.confidence * 100) + "%";
+    };
+
+    // when Clear is clicked...
+    document.getElementById("clear").onclick = () => {
+      // forget the chosen file
+      file.value = "";
+      // hide the preview
+      preview.hidden = true;
+      // wipe the answer
+      digit.textContent = confidence.textContent = "";
+    };
+  </script>
+</body>
+</html>
+`}
+      />
+
+      <h4>Step 8: run it</h4>
+      <Say host={B}>Is that everything?</Say>
+      <Say host={A}>That’s everything. One command starts the server.</Say>
+      <Code
+        filename="PowerShell"
+        lang="shell"
+        className="mt-4 text-[0.82em]"
+        code={`
+# start the server; --reload restarts it whenever you save a file
+uvicorn main:app --reload
+`}
+      />
+      <p>
+        You should see <code>Uvicorn running on http://127.0.0.1:8000</code>. Leave this window open: it’s the server. Press{" "}
+        <kbd>Ctrl</kbd> + <kbd>C</kbd> to stop it.
+      </p>
+
+      <h4>Step 9: try it, three ways</h4>
+      <Say host={B}>How do we know it works?</Say>
+      <Say host={A}>We ask it, three different ways. They all go through the same <code>/predict</code>.</Say>
+      <ol>
+        <li>
+          <b>The page:</b> open <code>http://127.0.0.1:8000</code>, choose a photo of a digit, press Predict.
+        </li>
+        <li>
+          <b>The docs:</b> open <code>http://127.0.0.1:8000/docs</code>, expand <code>POST /predict</code>, press “Try it out”
+          and upload an image. You see the raw JSON.
+        </li>
+        <li>
+          <b>The terminal:</b> in a second PowerShell window, send an image with <code>curl</code>:
+        </li>
+      </ol>
+      <Code
+        filename="PowerShell"
+        lang="shell"
+        className="mt-4 text-[0.82em]"
+        code={`
+# send seven.png to /predict and print the JSON reply (curl.exe comes with Windows)
+curl.exe -F "file=@seven.png" http://127.0.0.1:8000/predict
+`}
+      />
+      <Cue>Try a clean digit, a messy one, and a photo of a blank page (it should say “No digit found”).</Cue>
 
       <H3 id="design">Design decisions worth saying out loud</H3>
       <Say host={B}>What would you watch out for if this ran for real users?</Say>
-      <Say host={A}>Load the model once, validate uploads, and keep preprocessing identical to training.</Say>
+      <Say host={A}>Load the model once, check every upload, and make every image look like the data we trained on.</Say>
       <Columns>
         <Card title="Do" tone="green">
           <ul>
             <li>Load the model once, not per request.</li>
-            <li>Validate the type and size of uploads.</li>
-            <li>Return all probabilities, so the UI can show uncertainty.</li>
-            <li>
-              Keep preprocessing in <i>one</i> function shared with training.
-            </li>
+            <li>Check every upload: is it an image, can we read it, is there a digit in it?</li>
+            <li>Return all probabilities, so the page can show how sure the model is.</li>
+            <li>Serve the page and the API from the same server.</li>
           </ul>
         </Card>
         <Card title="Watch out for" tone="amber">
           <ul>
-            <li>Training/serving skew (inverted colours!).</li>
+            <li>Training/serving skew: inverted colours, off-centre or tiny digits.</li>
             <li>Overconfident wrong answers: softmax is not calibrated.</li>
-            <li>CORS when the UI and API run on different ports.</li>
+            <li>CORS, if you ever host the page somewhere other than the API.</li>
           </ul>
         </Card>
       </Columns>
