@@ -103,8 +103,13 @@ export function Ep01Notes() {
       <Say host={A}>Before any theory, show me it working.</Say>
       <Say host={B}>Here’s the app: upload a digit, hit PREDICT, and see what comes back.</Say>
       <Cue>Switch to the running app. Upload two or three digits, including one that fails.</Cue>
-      <Code className="mt-4 text-[0.82em]" code={`# start the API server, then open http://127.0.0.1:8000
-$ uvicorn main:app --reload`} />
+      <Code
+        className="mt-4 text-[0.82em]"
+        filename="terminal"
+        lang="shell"
+        code={`REM start the API server, then open http://127.0.0.1:8000
+uvicorn main:app --reload`}
+      />
       <p>What you just saw: an image goes in, a digit comes out, and we have no idea why.</p>
       <Figure wide={false}>
         <Flow steps={["handwritten image", "???", <b key="7">7 · confidence 0.99</b>]} accent={[1]} />
@@ -1949,20 +1954,20 @@ torch.save(model.state_dict(), "model.pt")
       <H3 id="build-app">Build it, step by step</H3>
       <Say host={B}>Okay. Empty folder. Where do we start?</Say>
       <Say host={A}>
-        With the folder itself. Everything here is typed into PowerShell on Windows. By the end there are three small files
+        With the folder itself. Everything here is typed into the Command Prompt (cmd) on Windows. By the end there are three small files
         and one trained model.
       </Say>
-      <Cue>Open a fresh PowerShell window and type each command live.</Cue>
+      <Cue>Open a fresh terminal window and type each command live.</Cue>
 
       <h4>Step 1: a folder for the app</h4>
       <Code
-        filename="PowerShell"
+        filename="terminal"
         lang="shell"
         className="mt-4 text-[0.82em]"
         code={`
-# make a new folder for the app
+REM make a new folder for the app
 mkdir digit-api
-# go into it
+REM go into it
 cd digit-api
 `}
       />
@@ -1974,30 +1979,16 @@ cd digit-api
         projects on the same computer.
       </Say>
       <Code
-        filename="PowerShell"
+        filename="terminal"
         lang="shell"
         className="mt-4 text-[0.82em]"
         code={`
-# create a virtual environment: a private Python, in a folder called .venv
+REM create a virtual environment: a private Python, in a folder called .venv
 python -m venv .venv
-# switch this window to use it: the prompt now starts with (.venv)
-.venv\\Scripts\\Activate.ps1
+REM switch this window to use it: the prompt now starts with (.venv)
+.venv\\Scripts\\activate.bat
 `}
       />
-      <Callout plain icon="🛑" tone="amber" title="If PowerShell says “running scripts is disabled”">
-        Windows blocks the activate script by default. Allow scripts for this one window only, then activate again:
-      <Code
-        filename="PowerShell"
-        lang="shell"
-        className="mt-4 text-[0.82em]"
-        code={`
-# allow scripts, for this PowerShell window only
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-# now activate again
-.venv\\Scripts\\Activate.ps1
-`}
-      />
-      </Callout>
 
       <h4>Step 3: install the packages</h4>
       <Say host={B}>What do we need to install?</Say>
@@ -2006,13 +1997,13 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
         Pillow for images, NumPy).
       </Say>
       <Code
-        filename="PowerShell"
+        filename="terminal"
         lang="shell"
         className="mt-4 text-[0.82em]"
         code={`
-# the web framework, the server that runs it, and support for file uploads
+REM the web framework, the server that runs it, and support for file uploads
 python -m pip install fastapi uvicorn python-multipart
-# PyTorch for the model, Pillow to open images, NumPy for arrays
+REM PyTorch for the model, Pillow to open images, NumPy for arrays
 python -m pip install torch pillow numpy
 `}
       />
@@ -2024,14 +2015,16 @@ python -m pip install torch pillow numpy
         files we’re about to write.
       </Say>
       <Code
-        filename="PowerShell"
+        filename="terminal"
         lang="shell"
         className="mt-4 text-[0.82em]"
         code={`
-# copy model.pt from the Part 2 notebook's folder (change the path if yours is elsewhere)
-Copy-Item ..\\mnsistNumpy\\model.pt .
-# create the three empty files we're about to write
-New-Item model.py, main.py, index.html
+REM copy model.pt from the Part 2 notebook's folder (change the path if yours is elsewhere)
+copy ..\\mnsistNumpy\\model.pt .
+REM create the three empty files we're about to write
+type nul > model.py
+type nul > main.py
+type nul > index.html
 `}
       />
       <p>When we’re done, the folder looks like this:</p>
@@ -2299,11 +2292,11 @@ async def predict(file: UploadFile = File(...)):
       <Say host={B}>Is that everything?</Say>
       <Say host={A}>That’s everything. One command starts the server.</Say>
       <Code
-        filename="PowerShell"
+        filename="terminal"
         lang="shell"
         className="mt-4 text-[0.82em]"
         code={`
-# start the server; --reload restarts it whenever you save a file
+REM start the server; --reload restarts it whenever you save a file
 uvicorn main:app --reload
 `}
       />
@@ -2324,15 +2317,15 @@ uvicorn main:app --reload
           and upload an image. You see the raw JSON.
         </li>
         <li>
-          <b>The terminal:</b> in a second PowerShell window, send an image with <code>curl</code>:
+          <b>The terminal:</b> in a second terminal window, send an image with <code>curl</code>:
         </li>
       </ol>
       <Code
-        filename="PowerShell"
+        filename="terminal"
         lang="shell"
         className="mt-4 text-[0.82em]"
         code={`
-# send seven.png to /predict and print the JSON reply (curl.exe comes with Windows)
+REM send seven.png to /predict and print the JSON reply (curl comes with Windows)
 curl.exe -F "file=@seven.png" http://127.0.0.1:8000/predict
 `}
       />

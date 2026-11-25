@@ -102,7 +102,7 @@ export function Code({
   className?: string;
   filename?: string;
   highlightLines?: number[];
-  /** python (default) and shell use "#" comments; json and html use "//", "<!--" and CSS-style comments; text has no colours */
+  /** python (default) uses "#" comments; shell (Windows cmd) uses "REM" lines; json and html use "//", "<!--" and CSS-style comments; text has no colours */
   lang?: "python" | "shell" | "json" | "html" | "text";
   /** show a Copy button (default on) */
   copy?: boolean;
@@ -129,7 +129,15 @@ export function Code({
             <span
               className={`block ${highlightLines.includes(i + 1) ? "-mx-5 border-l-4 border-purple bg-purple/10 px-4" : ""}`}
             >
-              {lang === "json" ? highlightJson(l) : lang === "html" ? highlightHtml(l) : lang === "text" ? l : highlight(l)}
+              {lang === "json"
+                ? highlightJson(l)
+                : lang === "html"
+                  ? highlightHtml(l)
+                  : lang === "text"
+                    ? l
+                    : lang === "shell" && /^\s*REM\b/i.test(l)
+                      ? <span className="text-faint italic">{l}</span>
+                      : highlight(l)}
               {l === "" ? " " : ""}
             </span>
           </Fragment>
