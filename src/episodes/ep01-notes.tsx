@@ -1966,9 +1966,9 @@ torch.save(model.state_dict(), "model.pt")
         className="mt-4 text-[0.82em]"
         code={`
 REM make a new folder for the app
-mkdir digit-api
-REM go into it
-cd digit-api
+mkdir D:\\doc\\Projects\\singleRepos\\twoBitsApart
+REM go into it (/d also switches drive, in case you're not on D: already)
+cd /d D:\\doc\\Projects\\singleRepos\\twoBitsApart
 `}
       />
 
@@ -2019,8 +2019,8 @@ python -m pip install torch pillow numpy
         lang="shell"
         className="mt-4 text-[0.82em]"
         code={`
-REM copy model.pt from the Part 2 notebook's folder (change the path if yours is elsewhere)
-copy ..\\mnsistNumpy\\model.pt .
+REM copy model.pt from the Part 2 notebook's folder, where cell 22 saved it
+copy D:\\doc\\Projects\\twoBitsApart\\mnsistNumpy\\model.pt .
 REM create the three empty files we're about to write
 type nul > model.py
 type nul > main.py
@@ -2032,7 +2032,7 @@ type nul > index.html
         lang="text"
         className="mt-4 text-[0.82em]"
         code={`
-digit-api/
+twoBitsApart/
 ├── .venv/        the virtual environment (made in step 2)
 ├── model.pt      the trained weights (from Part 2)
 ├── model.py      loads the model
